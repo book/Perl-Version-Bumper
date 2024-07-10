@@ -205,6 +205,24 @@ my sub _remove_enabled_features ( $self, $doc ) {
         }
         else { _drop_statement($warn_line); }
     }
+
+    # strict is automatically enabled with 5.12
+    if ( $bundle_num >= 5.012 ) {
+        my $use_strict = $doc->find(
+            sub ( $root, $elem ) {
+                return 1
+                  if $elem->isa('PPI::Statement::Include')
+                  && $elem->module eq 'strict'
+                  && !$elem->arguments;    # bare use strict
+                return;                    # only top-level
+            }
+        );
+        if ( ref $use_strict ) {
+            _drop_statement($_) for @$use_strict;
+        }
+    }
+
+    return;
 }
 
 my sub _insert_version_stmt ( $self, $doc ) {
