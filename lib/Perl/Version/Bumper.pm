@@ -85,10 +85,26 @@ sub bump ( $self, $code, $source = 'input code' ) {
         # drop the existing version statement
         # and add the new one at the top
         else {
+            my $use_v = shift @$version_stmts;    # there's only one
             my ( $old_num, $new_num ) = map version->parse($_)->numify,
-              my ( $old_str, $new_str ) = ( $version_stmts->[0]->version, $self->version );
+              my ( $old_str, $new_str ) = ( $use_v->version, $self->version );
             if ( $old_num <= $new_num && $old_str ne $new_str ) {
-                $version_stmts->[0]->remove;
+
+                # remove non-significant elements since previous newline
+                while ( my $prev_sibling = $use_v->previous_sibling ) {
+                    last if $prev_sibling->significant;
+                    last if $prev_sibling =~ /\n\z/;
+                    $prev_sibling->remove;
+                }
+
+                # remove non-significant elements until next newline (included)
+                while ( my $next_sibling = $use_v->next_sibling ) {
+                    last if $next_sibling->significant;
+                    my $content = $next_sibling->content;
+                    $next_sibling->remove;
+                    last if $content eq "\n";
+                }
+                $use_v->remove;
                 _insert_version_stmt( $self, $doc );
                 $bumped = $doc->serialize;
             }
