@@ -198,3 +198,19 @@ no feature 'indirect';
 no feature 'multidimensional';
 --- v5.36
 use v5.36;
+########## don't get medieval
+require v5.28;
+use strict;
+use feature 'say';
+use feature 'state';
+use feature 'current_sub';
+use feature 'bareword_filehandles';
+use feature 'bitwise';
+use feature 'evalbytes';
+use feature 'fc';
+use feature 'postderef_qq';
+use feature 'switch';
+use feature 'unicode_eval';
+use feature 'unicode_strings';
+--- v5.28
+use v5.28;
