@@ -18,8 +18,7 @@ has version => (
     default => 'v5.28',
 );
 
-my $base_minor = 40;     # Perl 5.40.0 was released
-my $base_year  = 124;    # in 2024 (offset by 1900)
+my $base_minor = $^V->{version}[1];     # our minor
 
 around BUILDARGS => sub ( $orig, $class, @args ) {
     my $args = $class->$orig(@args);
@@ -28,13 +27,10 @@ around BUILDARGS => sub ( $orig, $class, @args ) {
         my ( $major, $minor ) = $version->{version}->@*;
         croak "Major version number must be 5, not $major"
           if $major != 5;
+        croak "Minor version number $minor > $base_minor"
+          if $minor > $base_minor;
         croak "Minor version number must be even, not $minor"
           if $minor % 2;
-        my $latest_minor = $base_minor + ( (localtime)[5] - $base_year ) * 2;
-        croak sprintf
-          "Minor version number $minor > %d (is the year %d already?)",
-          $latest_minor, 1900 + $base_year + ( $minor - $base_minor ) / 2
-          if $minor > $latest_minor;
         $args->{version} = $version->normal =~ s/\.0\z//r;
     }
     $args;
