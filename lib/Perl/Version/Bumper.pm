@@ -47,6 +47,8 @@ my sub _insert_version_stmt ( $self, $doc ) {
 }
 
 sub bump ( $self, $code, $source = 'input code' ) {
+    return $code unless length $code;    # don't touch the empty string
+
     my $doc = PPI::Document->new( \$code );
     croak "Parsing failed" unless defined $doc;
 
