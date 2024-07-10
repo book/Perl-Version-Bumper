@@ -215,6 +215,21 @@ my sub _remove_enabled_features ( $self, $doc ) {
         }
     }
 
+    # drop previously disabled obsolete features
+    for my $no_feature ( grep $_->type eq 'no', _find_use( feature => $doc ) ) {
+        my @old_args = _ppi_list_to_perl_list( $no_feature->arguments );
+        my @new_args = grep exists $enabled{$_}, @old_args;
+        next if @new_args == @old_args;    # nothing to remove
+        if (@new_args) {    # replace old statement with a smaller one
+            my $new_no_feature = PPI::Document->new(
+                \"no warnings @{[ join ', ', map qq{'$_'}, @new_args]};" );
+            $no_feature->insert_before( $_->remove )
+              for $new_no_feature->elements;
+            $no_feature->remove;
+        }
+        else { _drop_statement($no_feature); }
+    }
+
     # drop experimental warnings
     for my $warn_line ( grep $_->type eq 'no', _find_use( warnings => $doc ) ) {
         my @old_args = _ppi_list_to_perl_list( $warn_line->arguments );

@@ -177,3 +177,24 @@ sub main {
 use v5.38;
 sub main {
 }
+########## what happened to perl 7
+require v5.36;
+use strict;
+use warnings;
+use feature 'say';
+use feature 'state';
+use feature 'current_sub';
+use feature 'fc';
+use feature 'lexical_subs';
+use feature 'signatures';
+use feature 'isa';
+use feature 'bareword_filehandles';
+use feature 'bitwise';
+use feature 'evalbytes';
+use feature 'postderef_qq';
+use feature 'unicode_eval';
+use feature 'unicode_strings';
+no feature 'indirect';
+no feature 'multidimensional';
+--- v5.36
+use v5.36;
