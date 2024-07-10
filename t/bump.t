@@ -214,3 +214,19 @@ use feature 'unicode_eval';
 use feature 'unicode_strings';
 --- v5.28
 use v5.28;
+########## no indirect
+use strict;
+use warnings;
+use Sub::StrictDecl;
+no indirect;
+use Test::More;
+--- v5.28
+use v5.28;
+use warnings;
+use Sub::StrictDecl;
+no indirect;
+use Test::More;
+--- v5.36
+use v5.36;
+use Sub::StrictDecl;
+use Test::More;
