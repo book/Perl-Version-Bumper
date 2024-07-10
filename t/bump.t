@@ -56,6 +56,28 @@ use v5.28;
 ...;
 # more stuff
 ...;
+=== use version inside a block
+{   # TODO: drop feature / warnings
+    use v5.20;
+    use feature 'signatures';
+    no warnings 'experimental::signatures';
+}
+--- v5.36
+use v5.36;
+{   # TODO: drop feature / warnings
+    use feature 'signatures';
+    no warnings 'experimental::signatures';
+}
+=== use version inside a BEGIN
+BEGIN {   # TODO: drop experimental
+    use v5.20;
+    use experimental 'signatures';
+}
+--- v5.36
+use v5.36;
+BEGIN {   # TODO: drop experimental
+    use experimental 'signatures';
+}
 === use version followed by stuff
 use Foo;
 use 5.020; use strict; use warnings; # comment

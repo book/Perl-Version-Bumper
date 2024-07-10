@@ -56,7 +56,7 @@ sub bump ( $self, $code, $source = 'input code' ) {
     my $version_stmts = $doc->find(
         sub ( $root, $elem ) {
             return 1 if $elem->isa('PPI::Statement::Include') && $elem->version;
-            return;
+            return '';
         }
     );
 
