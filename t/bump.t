@@ -113,7 +113,6 @@ use warnings;
 use feature 'signatures';
 --- v5.36
 use v5.36;
-use warnings;
 ########## multiple features enabled at once
 use v5.20;
 use strict;
@@ -132,7 +131,6 @@ use feature 'signatures';
 no warnings 'experimental::signatures';
 --- v5.36
 use v5.36;
-use warnings;
 ########## multiple features enabled at once with experimental
 use v5.20;
 use strict;
@@ -148,7 +146,6 @@ use warnings;
 use experimental 'signatures';
 --- v5.36
 use v5.36;
-use warnings;
 ########## pay attention to non-significant elements
 #!/usr/bin/env perl
 use strict; use warnings; use v5.24; use feature qw/signatures/;
@@ -163,7 +160,6 @@ sub main {
 --- v5.36
 #!/usr/bin/env perl
 use v5.36;
-use warnings;
 sub main {
 }
 --- v5.38

@@ -157,6 +157,22 @@ my sub _drop_statement ($stmt) {
     $stmt->remove;
 }
 
+my sub _drop_bare_use ( $module, $doc ) {
+    my $use_module = $doc->find(
+        sub ( $root, $elem ) {
+            return 1
+              if $elem->isa('PPI::Statement::Include')
+              && $elem->module eq $module
+              && !$elem->arguments;    # bare use module
+            return;                    # only top-level
+        }
+    );
+    if ( ref $use_module ) {
+        _drop_statement($_) for @$use_module;
+    }
+    return;
+}
+
 my sub _find_use ( $module, $doc ) {
     my $found = $doc->find(
         sub ( $root, $elem ) {
@@ -215,20 +231,9 @@ my sub _remove_enabled_features ( $self, $doc ) {
     }
 
     # strict is automatically enabled with 5.12
-    if ( $bundle_num >= 5.012 ) {
-        my $use_strict = $doc->find(
-            sub ( $root, $elem ) {
-                return 1
-                  if $elem->isa('PPI::Statement::Include')
-                  && $elem->module eq 'strict'
-                  && !$elem->arguments;    # bare use strict
-                return;                    # only top-level
-            }
-        );
-        if ( ref $use_strict ) {
-            _drop_statement($_) for @$use_strict;
-        }
-    }
+    # warnings are automatically enabled with 5.36
+    _drop_bare_use( strict   => $doc ) if $bundle_num >= 5.012;
+    _drop_bare_use( warnings => $doc ) if $bundle_num >= 5.036;
 
     return;
 }
