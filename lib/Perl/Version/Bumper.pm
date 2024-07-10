@@ -130,19 +130,27 @@ my sub _ppi_list_to_perl_list {
 
 my sub _drop_statement ($stmt) {
 
-    # remove non-significant elements since previous newline
+    # remove non-significant elements before the statement
     while ( my $prev_sibling = $stmt->previous_sibling ) {
         last if $prev_sibling->significant;
         last if $prev_sibling =~ /\n\z/;
         $prev_sibling->remove;
     }
 
-    # remove non-significant elements until next newline (included)
-    while ( my $next_sibling = $stmt->next_sibling ) {
-        last if $next_sibling->significant;
-        my $content = $next_sibling->content;
-        $next_sibling->remove;
-        last if $content eq "\n";
+    # remove non-significant elements after the statement
+    # if there was no significant element before it on the same line
+    $stmt->document->index_locations;
+    if (  !$stmt->sprevious_sibling
+        || $stmt->sprevious_sibling->location->[0] ne $stmt->location->[0] )
+    {
+        # remove non-significant elements until next newline (included)
+        while ( my $next_sibling = $stmt->next_sibling ) {
+            last if $next_sibling->significant;
+            my $content = $next_sibling->content;
+            $next_sibling->remove;
+            last if $content eq "\n";
+        }
+        $stmt->document->flush_locations;
     }
 
     # and finally remove it

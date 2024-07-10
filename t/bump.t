@@ -140,3 +140,20 @@ use experimental 'signatures';
 --- v5.36
 use v5.36;
 use warnings;
+########## pay attention to non-significant elements
+#!/usr/bin/env perl
+use strict; use warnings; use v5.24; use feature qw/signatures/;
+sub main {
+}
+--- v5.28
+#!/usr/bin/env perl
+use v5.28;
+use warnings; use feature qw/signatures/;
+sub main {
+}
+--- v5.36
+#!/usr/bin/env perl
+use v5.36;
+use warnings;
+sub main {
+}
