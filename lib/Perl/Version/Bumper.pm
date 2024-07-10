@@ -291,8 +291,8 @@ sub bump ( $self, $code, $source = 'input code' ) {
             my ( $old_num, $new_num ) = map version->parse($_)->numify,
               my ( $old_str, $new_str ) = ( $use_v->version, $self->version );
             if ( $old_num <= $new_num && $old_str ne $new_str ) {
-                _drop_statement($use_v);
                 _insert_version_stmt( $self, $doc );
+                _drop_statement($use_v);
                 $bumped = $doc->serialize;
             }
         }
