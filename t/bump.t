@@ -42,6 +42,10 @@ use v5.28;
 use v5.28;
 --- v5.28
 use v5.28;
+########## same version
+use 5.028;
+--- v5.28
+use v5.28;
 ########## move version to the top
 ...;
 use v5.14;
@@ -50,6 +54,12 @@ no strict 'refs';
 use v5.28;
 ...;
 no strict 'refs';
+########## same version, move to top
+package Foo;
+use v5.28;
+--- v5.28
+use v5.28;
+package Foo;
 ########## move version after comments
 #!/usr/bin/env perl
 ...;
