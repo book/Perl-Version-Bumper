@@ -6,12 +6,21 @@ my %tests = ( empty => do { local $/; split /^########## (.*)\n/m, <DATA> } );
 for my $name ( sort keys %tests ) {
     my ( $src, %expected ) = split /^--- (.*)\n/m, $tests{$name}, -1;
     for my $version ( sort keys %expected ) {
-        my $perv = Perl::Version::Bumper->new( version => $version );
-        is( $perv->bump($src), $expected{$version} // '', "$name [$version]" );
+      SKIP: {
+            my $perv = eval {
+                Perl::Version::Bumper->new( version => $version );
+            };
+            skip "This is Perl $^V, not $version" unless $perv;
+            is(
+                $perv->bump($src),
+                $expected{$version} // '',
+                "$name [$version]"
+            );
+        }
     }
-
 }
-    done_testing;
+
+done_testing;
 
 __DATA__
 --- v5.14
@@ -155,5 +164,10 @@ sub main {
 #!/usr/bin/env perl
 use v5.36;
 use warnings;
+sub main {
+}
+--- v5.38
+#!/usr/bin/env perl
+use v5.38;
 sub main {
 }
