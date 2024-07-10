@@ -39,12 +39,37 @@ around BUILDARGS => sub ( $orig, $class, @args ) {
     $args;
 };
 
+# PRIVATE FUNCTIONS
+
+my sub _drop_statement ($stmt) {
+
+    # remove non-significant elements since previous newline
+    while ( my $prev_sibling = $stmt->previous_sibling ) {
+        last if $prev_sibling->significant;
+        last if $prev_sibling =~ /\n\z/;
+        $prev_sibling->remove;
+    }
+
+    # remove non-significant elements until next newline (included)
+    while ( my $next_sibling = $stmt->next_sibling ) {
+        last if $next_sibling->significant;
+        my $content = $next_sibling->content;
+        $next_sibling->remove;
+        last if $content eq "\n";
+    }
+
+    # and finally remove it
+    $stmt->remove;
+}
+
 my sub _insert_version_stmt ( $self, $doc ) {
     my $version_stmt =
       PPI::Document->new( \sprintf "use %s;\n", $self->version );
     my $insert_point = $doc->schild(0);
     $insert_point->insert_before( $_->remove ) for $version_stmt->elements;
 }
+
+# PUBLIC METHOS
 
 sub bump ( $self, $code, $source = 'input code' ) {
     return $code unless length $code;    # don't touch the empty string
@@ -89,22 +114,7 @@ sub bump ( $self, $code, $source = 'input code' ) {
             my ( $old_num, $new_num ) = map version->parse($_)->numify,
               my ( $old_str, $new_str ) = ( $use_v->version, $self->version );
             if ( $old_num <= $new_num && $old_str ne $new_str ) {
-
-                # remove non-significant elements since previous newline
-                while ( my $prev_sibling = $use_v->previous_sibling ) {
-                    last if $prev_sibling->significant;
-                    last if $prev_sibling =~ /\n\z/;
-                    $prev_sibling->remove;
-                }
-
-                # remove non-significant elements until next newline (included)
-                while ( my $next_sibling = $use_v->next_sibling ) {
-                    last if $next_sibling->significant;
-                    my $content = $next_sibling->content;
-                    $next_sibling->remove;
-                    last if $content eq "\n";
-                }
-                $use_v->remove;
+                _drop_statement($use_v);
                 _insert_version_stmt( $self, $doc );
                 $bumped = $doc->serialize;
             }
