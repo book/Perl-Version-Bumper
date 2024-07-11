@@ -200,8 +200,9 @@ my sub _remove_enabled_features ( $self, $doc ) {
       if $bundle_num >= 5.026;
 
     # drop features enabled in this bundle
+    # (also if they were enabled with `use experimental`)
     for my $module (qw( feature experimental )) {
-        for my $use_line ( grep $_->type eq 'use',_find_use( $module => $doc ) ) {
+        for my $use_line ( grep $_->type eq 'use', _find_use( $module => $doc ) ) {
             my @old_args = _ppi_list_to_perl_list( $use_line->arguments );
             my @new_args = grep !exists $enabled{$_}, @old_args;
             next if @new_args == @old_args;    # nothing to remove
@@ -223,7 +224,7 @@ my sub _remove_enabled_features ( $self, $doc ) {
         next if @new_args == @old_args;    # nothing to remove
         if (@new_args) {    # replace old statement with a smaller one
             my $new_no_feature = PPI::Document->new(
-                \"no warnings @{[ join ', ', map qq{'$_'}, @new_args]};" );
+                \"no feature @{[ join ', ', map qq{'$_'}, @new_args]};" );
             $no_feature->insert_before( $_->remove )
               for $new_no_feature->elements;
             $no_feature->remove;
