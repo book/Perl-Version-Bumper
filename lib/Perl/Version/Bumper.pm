@@ -269,7 +269,25 @@ my sub _insert_version_stmt ( $self, $doc ) {
     my $version_stmt =
       PPI::Document->new( \sprintf "use %s;\n", $self->version );
     my $insert_point = $doc->schild(0);
-    $insert_point->insert_before( $_->remove ) for $version_stmt->elements;
+
+    # insert before the next significant sibling
+    # if the first element is a use VERSION
+    $insert_point = $insert_point->snext_sibling
+      if $insert_point->isa('PPI::Statement::Include')
+      && $insert_point->version
+      && $insert_point->snext_sibling;
+
+    # because of Perl::Critic::Policy::Modules::RequireExplicitPackage
+    # we have to put the use VERSION line after the package line,
+    # if that's the first significant thing in the document
+    if ( $insert_point->isa('PPI::Statement::Package') ) {
+        $insert_point->insert_after( $_->remove ) for $version_stmt->elements;
+    }
+    else {
+        $insert_point->insert_before( $_->remove ) for $version_stmt->elements;
+    }
+
+    # cleanup features enabled by the new version
     _remove_enabled_features( $self, $doc );
 }
 
