@@ -215,6 +215,17 @@ use feature 'unicode_eval';
 use feature 'unicode_strings';
 --- v5.28
 use v5.28;
+########## multiple no feature on the same line
+use v5.12;
+no feature 'indirect', 'bareword_filehandles';
+--- v5.14
+use v5.14;
+no feature 'indirect', 'bareword_filehandles';
+--- v5.36
+use v5.36;
+no feature 'bareword_filehandles';
+--- v5.38
+use v5.38;
 ########## no indirect
 use strict;
 use warnings;
