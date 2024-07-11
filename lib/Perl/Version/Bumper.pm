@@ -29,6 +29,8 @@ around BUILDARGS => sub ( $orig, $class, @args ) {
           if $major != 5;
         croak "Minor version number $minor > $base_minor"
           if $minor > $base_minor;
+        croak "Minor version number $minor < 10"
+          if $minor < 10;
         croak "Minor version number must be even, not $minor"
           if $minor % 2;
         $args->{version} = $version->normal =~ s/\.0\z//r;

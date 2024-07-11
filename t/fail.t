@@ -12,6 +12,7 @@ my @errors = (
     [ 'v5.25'  => qr{\AMinor version number must be even, not 25 } ],
     [ '5.28'   => qr{\AMinor version number 280 > $this_minor } ],
     [ 'v5.100' => qr{\AMinor version number 100 > $this_minor } ],
+    [ 'v5.8'   => qr{\AMinor version number 8 < 10 } ],
 );
 
 for my $e (@errors) {
