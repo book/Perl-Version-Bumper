@@ -84,11 +84,12 @@ use v5.28;
 {
     use v5.20;
     use feature 'signatures';
-    no warnings 'experimental::signatures';
+    no warnings 'experimental::signatures', 'void';
 }
 --- v5.36
 use v5.36;
 {
+    no warnings 'void';
 }
 ########## use version inside a BEGIN
 BEGIN {
