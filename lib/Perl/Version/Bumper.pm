@@ -398,3 +398,96 @@ sub bump_file_safely ( $self, $file, $version_limit ) {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Perl::Version::Bumper - Update C<use VERSION> on any Perl code
+
+=head1 SYNOPSSIS
+
+    use Perl::Version::Bumper;
+
+    my $perv = Perl::Version::Bumper->new( version => 'v5.36' );
+
+    # bump source code directly
+    my $new_code = $perv->bump( $old_code );
+
+    # bump the source of a file
+    $perv->bump_file( $filename );
+
+    # bump the source of a file (and double check it compiles)
+    $perv->bump_file_safely( $filename, $version_limit );
+
+=head1 DESCRIPTION
+
+C<Perl::Version::Bumper> can update a piece of Perl code to
+make it declare it uses a more recent version of the Perl language by
+way of C<use VERSION>.
+
+It takes care of removing unnecessary loading of L<feature> and
+L<experimental> L<warnings>, and adds the C<use VERSION> line at the
+top of the file (thus encouraging "line 1 semantics").
+
+If the code already declares a Perl version, it can only be bumped
+to a higher version.
+
+=head1 ATTRIBUTES
+
+=head2 version
+
+The target version to bump to.
+
+The constructor accepts both forms of Perl versions, regular
+(e.g. C<v5.36>) and floating-point (e.g. C<5.036>).
+
+To protect against simple mistaks (e.g. passing C<5.36> instead of
+C<v5.36>), the constructor does some sanity checking, and checks that
+the given version:
+
+=over 4
+
+=item *
+
+is greater than or equal to C<v5.10>,
+
+=item *
+
+is lower than the version of the Perl currently running,
+
+=item *
+
+is even (this module targets stable Perl versionsi only).
+
+=back
+
+The constructor will also drops any version information after the minor
+version (so C<v5.36.2> will be turned into C<v5.36>).
+
+=head1 METHODS
+
+=head2 bump
+
+    my $new_code = $perv->bump( $old_code );
+
+Bump the declared Perl version in the source code to L</version>.
+
+=head2 bump_file
+
+    $perv->bump_file( $filename );
+
+Bump the code of the file argument in-place.
+
+=head2 bump_file_safely
+
+    $perv->bump_file_safely( $filename, $version_limit );
+
+Bump the source of the given file and save it to a temporaty file.
+If that file compiles continue with the bump and update the original file.
+
+If compilation fails, try again with the previous stable Perl version,
+and repeat all the way back to the currently declared version in the file,
+or C<$version_limit>, whichever is the more recent.
+
+=cut
