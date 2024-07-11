@@ -22,4 +22,16 @@ for my $e (@errors) {
     like( $@, $error, ".. expected error message" );
 }
 
+# version normalisation
+my %version = qw(
+  v5.26       v5.26
+  5.028       v5.28
+  5.030002    v5.30
+  v5.32.1     v5.32
+);
+
+is( Perl::Version::Bumper->new( version => $_ )->version,
+    $version{$_}, "$_ => $version{$_}" )
+  for sort keys %version;
+
 done_testing;
