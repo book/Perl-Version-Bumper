@@ -234,11 +234,14 @@ my sub _remove_enabled_features ( $self, $doc ) {
     # drop experimental warnings
     for my $warn_line ( grep $_->type eq 'no', _find_use( warnings => $doc ) ) {
         my @old_args = _ppi_list_to_perl_list( $warn_line->arguments );
-        my @new_args = grep !exists $enabled{ s/\Aexperimental:://r }, @old_args;
+        my @new_args = grep !exists $enabled{s/\Aexperimental:://r},
+          grep /\Aexperimental::/, @old_args;
+        my @keep_args = grep !/\Aexperimental::/, @old_args;
         next if @new_args == @old_args;    # nothing to remove
-        if (@new_args) {    # replace old statement with a smaller one
+        if ( @new_args || @keep_args ) {   # replace old statement
             my $new_warn_line = PPI::Document->new(
-                \"no warnings @{[ join ', ', map qq{'$_'}, @new_args]};" );
+                \"no warnings @{[ join ', ', map qq{'$_'}, @new_args, @keep_args]};"
+            );
             $warn_line->insert_before( $_->remove )
               for $new_warn_line->elements;
             $warn_line->remove;
