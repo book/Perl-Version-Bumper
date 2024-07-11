@@ -1,6 +1,6 @@
 package Perl::Version::Bumper;
-
 use v5.28;
+
 use warnings;
 use Sub::StrictDecl;
 use Path::Tiny;
