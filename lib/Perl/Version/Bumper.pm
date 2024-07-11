@@ -291,6 +291,32 @@ my sub _insert_version_stmt ( $self, $doc ) {
     _remove_enabled_features( $self, $doc );
 }
 
+my sub _try_bump_and_compile ( $self, $file, $version_limit ) {
+    my $code    = $file->slurp;
+    my $version = $self->version;
+
+    # try bumping down version until it compiles
+    while ( $version ge $version_limit or $version = '' ) {
+        my $perv = $self->version eq $version
+          ? $self    # no need to create a new object
+          : Perl::Version::Bumper->new( version => $version );
+        my $tmp = Path::Tiny->tempfile;
+        $tmp->spew( $perv->bump($code) );
+
+        # try to compile the file
+        open( \*OLDERR, '>&', \*STDERR )    or die "Can't dup STDERR: $!";
+        open( \*STDERR, '>',  '/dev/null' ) or die "Can't re-open STDERR: $!";
+        my $status = system $^X, '-c', $tmp;
+        open( \*STDERR, '>&', \*OLDERR ) or die "Can't restore STDERR: $!";
+        last unless $status >> 8;    # success!
+
+        # bump version down and repeat
+        $version = 'v5.' . ( ( split /\./, $version )[1] - 2 );
+    }
+
+    return $version;
+}
+
 # PUBLIC METHOS
 
 sub bump ( $self, $code, $source = 'input code' ) {
@@ -346,11 +372,27 @@ sub bump ( $self, $code, $source = 'input code' ) {
     return $bumped;
 }
 
-sub bump_file ( $self, $path ) {
-    $path = Path::Tiny->new($path);
-    my $code   = $path->slurp;
-    my $bumped = $self->bump( $code, $path );
-    $path->spew($bumped) if $bumped ne $code;
+sub bump_file ( $self, $file ) {
+    $file = Path::Tiny->new($file);
+    my $code   = $file->slurp;
+    my $bumped = $self->bump( $code, $file );
+    if ( $bumped ne $code ) {
+        $file->spew($bumped);
+        return !!1;
+    }
+    return;
+}
+
+sub bump_file_safely ( $self, $file, $version_limit ) {
+    $file = Path::Tiny->new($file);
+    if ( my $version = _try_bump_and_compile( $self, $file, $version_limit ) ) {
+        my $perv = $self->version eq $version
+          ? $self    # no need to create a new object
+          : Perl::Version::Bumper->new( version => $version );
+        $perv->bump_file($file);
+        return !!1;
+    }
+    return;
 }
 
 1;
