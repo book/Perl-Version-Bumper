@@ -319,6 +319,18 @@ my sub _try_bump_and_compile ( $self, $file, $version_limit ) {
     return $version;
 }
 
+my sub _version_stmts ($doc) {
+    my $version_stmts = $doc->find(
+        sub ( $root, $elem ) {
+            return 1 if $elem->isa('PPI::Statement::Include') && $elem->version;
+            return '';
+        }
+    );
+    croak "Bad condition for PPI::Node->find"
+      unless defined $version_stmts;
+    return $version_stmts ? @$version_stmts : ();
+}
+
 # PUBLIC METHOS
 
 sub bump ( $self, $code, $source = 'input code' ) {
@@ -327,51 +339,32 @@ sub bump ( $self, $code, $source = 'input code' ) {
     my $doc = PPI::Document->new( \$code );
     croak "Parsing failed" unless defined $doc;
 
-    # find if there's already a version
-    my $version_stmts = $doc->find(
-        sub ( $root, $elem ) {
-            return 1 if $elem->isa('PPI::Statement::Include') && $elem->version;
-            return '';
-        }
-    );
-
-    my $bumped = $code;
-
-    # ERROR
-    if ( !defined $version_stmts ) {
-        croak "Bad condition for PPI::Node->find";
-    }
-
-    # no version statement found, add one
-    elsif ( !$version_stmts ) {
-        _insert_version_stmt( $self, $doc );
-        $bumped = $doc->serialize;
-    }
-
     # found at least one version statement
-    else {    # arrayref: found some shit
+    if ( my @version_stmts = _version_stmts($doc) ) {
 
         # bail out if there's more than one `use VERSION`
-        if ( @$version_stmts > 1 ) {
+        if ( @version_stmts > 1 ) {
             carp "Found multiple use VERSION statements in $source:"
-              . join ', ', map $_->version, @$version_stmts;
+              . join ', ', map $_->version, @version_stmts;
         }
 
         # drop the existing version statement
         # and add the new one at the top
         else {
-            my $use_v = shift @$version_stmts;    # there's only one
+            my ($use_v) = @version_stmts;    # there's only one
             my ( $old_num, $new_num ) = map version->parse($_)->numify,
               $use_v->version, $self->version;
             if ( $old_num <= $new_num ) {
                 _insert_version_stmt( $self, $doc );
                 _drop_statement($use_v);
-                $bumped = $doc->serialize;
             }
         }
     }
 
-    return $bumped;
+    # no version statement found, add one
+    else { _insert_version_stmt( $self, $doc ); }
+
+    return $doc->serialize;
 }
 
 sub bump_file ( $self, $file ) {
