@@ -333,11 +333,9 @@ my sub _version_stmts ($doc) {
 
 # PUBLIC METHOS
 
-sub bump ( $self, $code, $source = 'input code' ) {
-    return $code unless length $code;    # don't touch the empty string
-
-    my $doc = PPI::Document->new( \$code );
-    croak "Parsing failed" unless defined $doc;
+sub bump_ppi ( $self, $doc ) {
+    $doc = $doc->clone;
+    my $source = $doc->filename // 'input code';
 
     # found at least one version statement
     if ( my @version_stmts = _version_stmts($doc) ) {
@@ -351,7 +349,7 @@ sub bump ( $self, $code, $source = 'input code' ) {
         # drop the existing version statement
         # and add the new one at the top
         else {
-            my ($use_v) = @version_stmts;    # there's only one
+            my ($use_v) = _version_stmts($doc);    # there's only one
             my ( $old_num, $new_num ) = map version->parse($_)->numify,
               $use_v->version, $self->version;
             if ( $old_num <= $new_num ) {
@@ -364,7 +362,16 @@ sub bump ( $self, $code, $source = 'input code' ) {
     # no version statement found, add one
     else { _insert_version_stmt( $self, $doc ); }
 
-    return $doc->serialize;
+    return $doc;
+}
+
+sub bump ( $self, $code, $source = 'input code' ) {
+    return $code unless length $code;    # don't touch the empty string
+
+    my $doc = PPI::Document->new( \$code );
+    croak "Parsing failed" unless defined $doc;
+
+    return $self->bump_ppi($doc)->serialize;
 }
 
 sub bump_file ( $self, $file ) {
@@ -404,7 +411,10 @@ Perl::Version::Bumper - Update C<use VERSION> on any Perl code
 
     my $perv = Perl::Version::Bumper->new( version => 'v5.36' );
 
-    # bump source code directly
+    # bump a PPI::Document (and get source code)
+    my $new_code = $perv->bump_ppi( $ppi_doc );
+
+    # bump source code
     my $new_code = $perv->bump( $old_code );
 
     # bump the source of a file
@@ -460,11 +470,19 @@ version (so C<v5.36.2> will be turned into C<v5.36>).
 
 =head1 METHODS
 
+=head2 bump_ppi
+
+    my $new_code = $perv->bump_ppi( $ppi_doc );
+
+Take a L<PPI::Document> as input, and return a new L<PPI::Document>
+with its declared version bumped to L</version>.
+
 =head2 bump
 
     my $new_code = $perv->bump( $old_code );
 
-Bump the declared Perl version in the source code to L</version>.
+Bump the declared Perl version in the source code to L</version>,
+and return the new source code as a string.
 
 =head2 bump_file
 
