@@ -256,3 +256,13 @@ use Test::More;
 use v5.36;
 use Sub::StrictDecl;
 use Test::More;
+########## fc
+use feature qw( say fc );
+say fc("\x{17F}");    # s
+--- v5.14
+use v5.14;
+use feature 'fc';
+say fc("\x{17F}");    # s
+--- v5.16
+use v5.16;
+say fc("\x{17F}");    # s
