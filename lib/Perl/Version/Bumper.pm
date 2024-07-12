@@ -293,24 +293,39 @@ my sub _insert_version_stmt ( $self, $doc ) {
     _remove_enabled_features( $self, $doc );
 }
 
-my sub _try_bump_and_compile ( $self, $file, $version_limit ) {
-    my $code    = $file->slurp;
-    my $version = $self->version;
+my sub _try_compile ( $file ) {
+
+    # redirect STDERR for quietness
+    my $tmperr = Path::Tiny->tempfile;
+    open( \*OLDERR, '>&', \*STDERR ) or die "Can't dup STDERR: $!";
+    open( \*STDERR, '>',  $tmperr )  or die "Can't re-open STDERR: $!";
+
+    # try to compile the file
+    my $status = system $^X, '-c', $file;
+    my $exit = $status >> 8;
+
+    # get STDERR back, and warn about errors while compiling
+    open( \*STDERR, '>&', \*OLDERR ) or die "Can't restore STDERR: $!";
+    warn $tmperr->slurp if $exit;
+
+    return !$exit;    # 0 means success
+}
+
+my sub _try_bump_ppi_safely ( $self, $doc, $version_limit ) {
+    my $version  = $self->version;
+    my $filename = $doc->filename;
 
     # try bumping down version until it compiles
+    # (careful about ge: it hides a bug that will show up with Perl 5.100)
     while ( $version ge $version_limit or $version = '' ) {
         my $perv = $self->version eq $version
           ? $self    # no need to create a new object
           : Perl::Version::Bumper->new( version => $version );
         my $tmp = Path::Tiny->tempfile;
-        $tmp->spew( $perv->bump($code) );
+        $tmp->spew( $perv->bump_ppi($doc)->serialize );
 
         # try to compile the file
-        open( \*OLDERR, '>&', \*STDERR )    or die "Can't dup STDERR: $!";
-        open( \*STDERR, '>',  '/dev/null' ) or die "Can't re-open STDERR: $!";
-        my $status = system $^X, '-c', $tmp;
-        open( \*STDERR, '>&', \*OLDERR ) or die "Can't restore STDERR: $!";
-        last unless $status >> 8;    # success!
+        last if _try_compile( $tmp );
 
         # bump version down and repeat
         $version = 'v5.' . ( ( split /\./, $version )[1] - 2 );
@@ -385,16 +400,34 @@ sub bump_file ( $self, $file ) {
     return;
 }
 
-sub bump_file_safely ( $self, $file, $version_limit ) {
+sub bump_file_safely ( $self, $file, $version_limit = undef ) {
     $file = Path::Tiny->new($file);
-    if ( my $version = _try_bump_and_compile( $self, $file, $version_limit ) ) {
+    my $code = $file->slurp;
+    my $doc  = PPI::Document->new( \$code, filename => $file );
+    croak "Parsing failed" unless defined $doc;
+    $version_limit //= do {
+        my @version_stmts = _version_stmts($doc);
+        @version_stmts
+          ? version->parse( $version_stmts[0]->version )->normal =~ s/\.0\z//r
+          : 'v5.10';
+    };
+
+    # try compiling the file: if it fails, our safeguard won't work
+    unless ( _try_compile($file) ) {
+        warn "Can't bump Perl version safely for $file: it does not compile\n";
+        return;    # return undef
+    }
+
+    # try bumping version safely, and save the result
+    if ( my $version = _try_bump_ppi_safely( $self, $doc, $version_limit ) ) {
         my $perv = $self->version eq $version
           ? $self    # no need to create a new object
           : Perl::Version::Bumper->new( version => $version );
-        $perv->bump_file($file);
-        return !!1;
+        $file->spew( $perv->bump_ppi($doc)->serialize );
+        return $version;
     }
-    return;
+
+    return '';    # return defined but false
 }
 
 1;
@@ -500,5 +533,9 @@ If that file compiles continue with the bump and update the original file.
 If compilation fails, try again with the previous stable Perl version,
 and repeat all the way back to the currently declared version in the file,
 or C<$version_limit>, whichever is the more recent.
+
+The return value is C<undef> if the original didn't compile, false
+(empty string) if all attempts to bump the file failed, and the actual
+version number the file was bumped to in case of success.
 
 =cut
