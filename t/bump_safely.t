@@ -78,3 +78,8 @@ use v5.36;
 my $str = << 'EOT';
 I'm a heredoc!
 EOT
+########## 5.8.5
+use v5.8.5;
+use strict;
+--- v5.28
+use v5.28;
