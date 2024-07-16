@@ -234,9 +234,10 @@ my sub _remove_enabled_features ( $self, $doc ) {
         else { _drop_statement($no_feature); }
     }
 
-    # drop experimental warnings
+    # drop experimental warnings, if any
     for my $warn_line ( grep $_->type eq 'no', _find_use( warnings => $doc ) ) {
         my @old_args = _ppi_list_to_perl_list( $warn_line->arguments );
+        next unless grep /\Aexperimental::/, @old_args;
         my @new_args = grep !exists $enabled{s/\Aexperimental:://r},
           grep /\Aexperimental::/, @old_args;
         my @keep_args = grep !/\Aexperimental::/, @old_args;

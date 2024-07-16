@@ -98,7 +98,7 @@ use v5.28;
 {
     use v5.20;
     use feature 'signatures';
-    no warnings 'experimental::signatures', 'void';
+    no warnings 'experimental::signatures', "void";
 }
 --- v5.36
 use v5.36;
@@ -143,12 +143,12 @@ use v5.20;
 use strict;
 use warnings;
 use feature qw( lexical_subs signatures );
-no warnings 'experimental::lexical_subs', 'experimental::signatures';
+no warnings "experimental::lexical_subs", "experimental::signatures";
 --- v5.22
 use v5.22;
 use warnings;
 use feature qw( lexical_subs signatures );
-no warnings 'experimental::lexical_subs', 'experimental::signatures';
+no warnings "experimental::lexical_subs", "experimental::signatures";
 --- v5.26
 use v5.26;
 use warnings;
@@ -266,3 +266,14 @@ say fc("\x{17F}");    # s
 --- v5.16
 use v5.16;
 say fc("\x{17F}");    # s
+########## stable quotes
+use strict;
+use warnings;
+no warnings "once";
+--- v5.28
+use v5.28;
+use warnings;
+no warnings "once";
+--- v5.36
+use v5.36;
+no warnings "once";
