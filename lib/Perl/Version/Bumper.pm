@@ -312,12 +312,12 @@ my sub _try_compile ( $file ) {
 }
 
 my sub _try_bump_ppi_safely ( $self, $doc, $version_limit ) {
-    my $version  = $self->version;
+    my $version  = version->parse( $self->version );
     my $filename = $doc->filename;
+    $version_limit = version->parse($version_limit);
 
     # try bumping down version until it compiles
-    # (careful about ge: it hides a bug that will show up with Perl 5.100)
-    while ( $version ge $version_limit or $version = '' ) {
+    while ( $version >= $version_limit or $version = '' ) {
         my $perv = $self->version eq $version
           ? $self    # no need to create a new object
           : Perl::Version::Bumper->new( version => $version );
@@ -328,7 +328,8 @@ my sub _try_bump_ppi_safely ( $self, $doc, $version_limit ) {
         last if _try_compile( $tmp );
 
         # bump version down and repeat
-        $version = 'v5.' . ( ( split /\./, $version )[1] - 2 );
+        $version =
+          version->parse( 'v5.' . ( ( split /\./, $version )[1] - 2 ) );
     }
 
     return $version;
