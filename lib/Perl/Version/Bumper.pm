@@ -130,7 +130,7 @@ my sub _ppi_list_to_perl_list {
     return __evaluate(@$root);
 }
 
-my sub _drop_statement ($stmt) {
+my sub _drop_statement ( $stmt, $keep_comments = '' ) {
 
     # remove non-significant elements before the statement
     while ( my $prev_sibling = $stmt->previous_sibling ) {
@@ -141,17 +141,24 @@ my sub _drop_statement ($stmt) {
 
     # remove non-significant elements after the statement
     # if there was no significant element before it on the same line
+    # (i.e. it was the only statement on the line)
     $stmt->document->index_locations;
     if (  !$stmt->sprevious_sibling
         || $stmt->sprevious_sibling->location->[0] ne $stmt->location->[0] )
     {
-        # remove non-significant elements until next newline (included)
-        while ( my $next_sibling = $stmt->next_sibling ) {
-            last if $next_sibling->significant;
-            my $content = $next_sibling->content;
-            $next_sibling->remove;
-            last if $content eq "\n";
+        # collect non-significant elements until next newline (included)
+        my ( $next, @to_drop ) =  ( $stmt );
+        while ( $next = $next->next_sibling ) {
+            last if $next->significant;
+            push @to_drop, $next;
+            last if $next eq "\n";
         }
+
+        # do not drop comments if asked to keep them
+        @to_drop = grep !$_->isa('PPI::Token::Comment') && $_ ne "\n", @to_drop
+          if $keep_comments && grep $_->isa('PPI::Token::Comment'), @to_drop;
+        $_->remove for @to_drop;
+
         $stmt->document->flush_locations;
     }
 
@@ -371,7 +378,7 @@ sub bump_ppi ( $self, $doc ) {
               $use_v->version, $self->version;
             if ( $old_num <= $new_num ) {
                 _insert_version_stmt( $self, $doc );
-                _drop_statement($use_v);
+                _drop_statement( $use_v, 1 );
             }
         }
     }
