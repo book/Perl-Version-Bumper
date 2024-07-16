@@ -183,7 +183,7 @@ my sub _drop_bare ( $type, $module, $doc ) {
     return;
 }
 
-my sub _find_use ( $module, $doc ) {
+my sub _find_include ( $module, $doc ) {
     my $found = $doc->find(
         sub ( $root, $elem ) {
             return 1
@@ -211,7 +211,7 @@ my sub _remove_enabled_features ( $self, $doc ) {
     # drop features enabled in this bundle
     # (also if they were enabled with `use experimental`)
     for my $module (qw( feature experimental )) {
-        for my $use_line ( grep $_->type eq 'use', _find_use( $module => $doc ) ) {
+        for my $use_line ( grep $_->type eq 'use', _find_include( $module => $doc ) ) {
             my @old_args = _ppi_list_to_perl_list( $use_line->arguments );
             my @new_args = grep !exists $enabled{$_}, @old_args;
             next if @new_args == @old_args;    # nothing to remove
@@ -227,7 +227,7 @@ my sub _remove_enabled_features ( $self, $doc ) {
     }
 
     # drop previously disabled obsolete features
-    for my $no_feature ( grep $_->type eq 'no', _find_use( feature => $doc ) ) {
+    for my $no_feature ( grep $_->type eq 'no', _find_include( feature => $doc ) ) {
         my @old_args = _ppi_list_to_perl_list( $no_feature->arguments );
         my @new_args = grep exists $enabled{$_}, @old_args;
         next if @new_args == @old_args;    # nothing to remove
@@ -242,7 +242,7 @@ my sub _remove_enabled_features ( $self, $doc ) {
     }
 
     # drop experimental warnings, if any
-    for my $warn_line ( grep $_->type eq 'no', _find_use( warnings => $doc ) ) {
+    for my $warn_line ( grep $_->type eq 'no', _find_include( warnings => $doc ) ) {
         my @old_args = _ppi_list_to_perl_list( $warn_line->arguments );
         next unless grep /\Aexperimental::/, @old_args;
         my @new_args = grep !exists $enabled{s/\Aexperimental:://r},
