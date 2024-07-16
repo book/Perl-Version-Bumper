@@ -92,6 +92,7 @@ use v5.28;
 #!/usr/bin/env perl
 use v5.28;
 ...;
+# some comment about use version
 # more stuff
 ...;
 ########## use version inside a block
@@ -121,6 +122,10 @@ use 5.020; use strict; use warnings; # comment
 use v5.28;
 use Foo;
 use warnings; # comment
+--- v5.36
+use v5.36;
+use Foo;
+# comment
 ########## partial feature removal
 use v5.20;
 use strict;
@@ -277,3 +282,11 @@ no warnings "once";
 --- v5.36
 use v5.36;
 no warnings "once";
+########## keep possibly meaningful comments
+use v5.28; ## no critic
+--- v5.28
+use v5.28;
+## no critic
+--- v5.36
+use v5.36;
+## no critic
