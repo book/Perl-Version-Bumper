@@ -1,7 +1,18 @@
 use Test2::V0;
 use Perl::Version::Bumper;
 
-my %tests = ( empty => do { local $/; split /^########## (.*)\n/m, <DATA> } );
+my %tests;
+
+{
+    my ( $i, %seen );
+    %tests =
+      map {
+        ++$i % 2             # only complain on the keys
+          and $seen{$_}++    # we've already seen
+          and die sprintf "A test named '$_' was seen more than once";
+        $_
+      } ( empty => do { local $/; split /^########## (.*)\n/m, <DATA> } );
+}
 
 for my $name ( sort keys %tests ) {
     my ( $src, %expected ) = split /^--- (.*)\n/m, $tests{$name}, -1;
