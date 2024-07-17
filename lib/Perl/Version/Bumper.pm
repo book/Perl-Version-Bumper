@@ -198,7 +198,19 @@ my sub _find_include ( $module, $doc ) {
     return @$found;
 }
 
-my sub _remove_enabled_features ( $self, $doc ) {
+my sub _version_stmts ($doc) {
+    my $version_stmts = $doc->find(
+        sub ( $root, $elem ) {
+            return 1 if $elem->isa('PPI::Statement::Include') && $elem->version;
+            return '';
+        }
+    );
+    croak "Bad condition for PPI::Node->find"
+      unless defined $version_stmts;
+    return $version_stmts ? @$version_stmts : ();
+}
+
+my sub _remove_enabled_features ( $self, $doc, $old_num ) {
     my %enabled;
     my $bundle = $self->version =~ s/\Av//r;
     @enabled{ $feature::feature_bundle{$bundle}->@* } = ();
@@ -208,11 +220,20 @@ my sub _remove_enabled_features ( $self, $doc ) {
     @enabled{qw( postderef lexical_subs )} = ()
       if $bundle_num >= 5.026;
 
+    # the 'bitwise' feature may break bitwise operators
+    my $code_uses_bitwise_ops = $doc->find(
+        sub ( $root, $elem ) {
+            $elem->isa('PPI::Token::Operator') && $elem =~ /\A[&|~^]\z/;
+        }
+    );
+    my $code_uses_bitwise_feature;
+
     # drop features enabled in this bundle
     # (also if they were enabled with `use experimental`)
     for my $module (qw( feature experimental )) {
         for my $use_line ( grep $_->type eq 'use', _find_include( $module => $doc ) ) {
             my @old_args = _ppi_list_to_perl_list( $use_line->arguments );
+            $code_uses_bitwise_feature = grep $_ eq 'bitwise', @old_args;
             my @new_args = grep !exists $enabled{$_}, @old_args;
             next if @new_args == @old_args;    # nothing to remove
             if (@new_args) {    # replace old statement with a smaller one
@@ -265,6 +286,33 @@ my sub _remove_enabled_features ( $self, $doc ) {
         _drop_bare( use => strict => $doc );
     }
 
+    # explicitly disable the 'bitwise' feature for
+    if (
+        $old_num < 5.028                  # code from before 'bitwise'
+        && $bundle_num >= 5.028           # bumped to after 'bitwise'
+        && $code_uses_bitwise_ops         # using bitwise ops
+        && !$code_uses_bitwise_feature    # but not the bitwise feature
+      )
+    {
+        # the `use VERSION` inserted earlier is always the last one in the doc
+        my $insert_point = ( _version_stmts($doc) )[-1];
+        my $no_feature_bitwise =
+          PPI::Document->new( \"no feature 'bitwise';\n" );
+        $insert_point->insert_after( $_->remove )
+          for $no_feature_bitwise->elements;
+
+        # also add a TODO comment to warn users
+        $insert_point = $insert_point->snext_sibling;
+        my $todo_comment = PPI::Document->new( \<<~ 'TODO_COMMENT');
+
+          # IMPORTANT: Please double-check the use of bitwise operators
+          # before removing the `no feature 'bitwise';` line below.
+          # See manual pages perlfeature (section "The 'bitwise' feature")
+          # and perlop (section "Bitwise String Operators") for details.
+          TODO_COMMENT
+        $insert_point->insert_before( $_->remove ) for $todo_comment->elements;
+    }
+
     # warnings are automatically enabled with 5.36
     # no indirect is not needed any more
     if ( $bundle_num >= 5.036 ) {
@@ -275,7 +323,7 @@ my sub _remove_enabled_features ( $self, $doc ) {
     return;
 }
 
-my sub _insert_version_stmt ( $self, $doc ) {
+my sub _insert_version_stmt ( $self, $doc, $old_num = version->parse( 'v5.8' )->numify ) {
     my $version_stmt =
       PPI::Document->new( \sprintf "use %s;\n", $self->version );
     my $insert_point = $doc->schild(0);
@@ -298,7 +346,7 @@ my sub _insert_version_stmt ( $self, $doc ) {
     }
 
     # cleanup features enabled by the new version
-    _remove_enabled_features( $self, $doc );
+    _remove_enabled_features( $self, $doc, $old_num );
 }
 
 my sub _try_compile ( $file ) {
@@ -343,18 +391,6 @@ my sub _try_bump_ppi_safely ( $self, $doc, $version_limit ) {
     return $version;
 }
 
-my sub _version_stmts ($doc) {
-    my $version_stmts = $doc->find(
-        sub ( $root, $elem ) {
-            return 1 if $elem->isa('PPI::Statement::Include') && $elem->version;
-            return '';
-        }
-    );
-    croak "Bad condition for PPI::Node->find"
-      unless defined $version_stmts;
-    return $version_stmts ? @$version_stmts : ();
-}
-
 # PUBLIC METHOS
 
 sub bump_ppi ( $self, $doc ) {
@@ -377,7 +413,7 @@ sub bump_ppi ( $self, $doc ) {
             my ( $old_num, $new_num ) = map version->parse($_)->numify,
               $use_v->version, $self->version;
             if ( $old_num <= $new_num ) {
-                _insert_version_stmt( $self, $doc );
+                _insert_version_stmt( $self, $doc, $old_num );
                 _drop_statement( $use_v, 1 );
             }
         }
