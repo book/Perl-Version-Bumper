@@ -290,3 +290,44 @@ use v5.28;
 --- v5.36
 use v5.36;
 ## no critic
+########## no feature 'bitwise'
+use v5.28;
+no feature 'bitwise';
+--- v5.36
+use v5.36;
+no feature 'bitwise';
+########## bitwise ops before v5.28
+use v5.14;
+my $z = $x | $y;
+--- v5.22
+use v5.22;
+my $z = $x | $y;
+--- v5.28
+use v5.28;
+
+# IMPORTANT: Please double-check the use of bitwise operators
+# before removing the `no feature 'bitwise';` line below.
+# See manual pages perlfeature (section "The 'bitwise' feature")
+# and perlop (section "Bitwise String Operators") for details.
+no feature 'bitwise';
+my $z = $x | $y;
+--- v5.36
+use v5.36;
+
+# IMPORTANT: Please double-check the use of bitwise operators
+# before removing the `no feature 'bitwise';` line below.
+# See manual pages perlfeature (section "The 'bitwise' feature")
+# and perlop (section "Bitwise String Operators") for details.
+no feature 'bitwise';
+my $z = $x | $y;
+########## bitwise ops + bitwise feature before v5.28
+use v5.22;
+use feature 'bitwise';
+no warnings 'experimental::bitwise';
+my $z = $x |. $y;
+--- v5.28
+use v5.28;
+my $z = $x |. $y;
+--- v5.36
+use v5.36;
+my $z = $x |. $y;
