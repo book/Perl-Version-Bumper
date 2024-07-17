@@ -342,3 +342,35 @@ my $z = $x |. $y;
 --- v5.36
 use v5.36;
 my $z = $x |. $y;
+########## bitwise op= before v5.28
+use v5.22;
+my $z |= $x;
+--- v5.28
+use v5.28;
+
+# IMPORTANT: Please double-check the use of bitwise operators
+# before removing the `no feature 'bitwise';` line below.
+# See manual pages perlfeature (section "The 'bitwise' feature")
+# and perlop (section "Bitwise String Operators") for details.
+no feature 'bitwise';
+my $z |= $x;
+--- v5.36
+use v5.36;
+
+# IMPORTANT: Please double-check the use of bitwise operators
+# before removing the `no feature 'bitwise';` line below.
+# See manual pages perlfeature (section "The 'bitwise' feature")
+# and perlop (section "Bitwise String Operators") for details.
+no feature 'bitwise';
+my $z |= $x;
+########## bitwise op= + bitwise feature before v5.28
+use v5.22;
+use feature 'bitwise';
+no warnings 'experimental::bitwise';
+my $z |.= $x;
+--- v5.28
+use v5.28;
+my $z |.= $x;
+--- v5.36
+use v5.36;
+my $z |.= $x;

@@ -223,7 +223,7 @@ my sub _remove_enabled_features ( $self, $doc, $old_num ) {
     # the 'bitwise' feature may break bitwise operators
     my $code_uses_bitwise_ops = $doc->find(
         sub ( $root, $elem ) {
-            $elem->isa('PPI::Token::Operator') && $elem =~ /\A[&|~^]\z/;
+            $elem->isa('PPI::Token::Operator') && $elem =~ /\A[&|~^]=?\z/;
         }
     );
     my $code_uses_bitwise_feature;
