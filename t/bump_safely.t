@@ -53,13 +53,24 @@ __DATA__
 BEGIN { die }
 --- v5.36
 BEGIN { die }
-########## indirect
+########## indirect (no strict)
 $o = new Foo;
 --- v5.36
 use v5.10;
 $o = new Foo;
 --- v5.16 v5.12
 $o = new Foo;
+########## indirect
+{ package Foo }
+my $o = new Foo;
+--- v5.36
+use v5.10;
+{ package Foo }
+my $o = new Foo;
+--- v5.36
+use v5.34;
+{ package Foo }
+my $o = new Foo;
 ########## multidimensional
 use strict;
 my %foo;
