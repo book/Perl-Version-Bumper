@@ -16,15 +16,17 @@ my %tests;
 
 for my $name ( sort keys %tests ) {
     my ( $src, %expected ) = split /^--- (.*)\n/m, $tests{$name}, -1;
-    for my $version ( sort keys %expected ) {
+    for my $target ( sort keys %expected ) {
+      my ( $version, $todo ) = split / /, $target, 2;
       SKIP: {
+            $todo &&= todo $todo;
             my $perv = eval {
                 Perl::Version::Bumper->new( version => $version );
             };
             skip "This is Perl $^V, not $version" unless $perv;
             is(
                 $perv->bump($src),
-                $expected{$version} // '',
+                $expected{$target} // '',
                 "$name [$version]"
             );
         }
