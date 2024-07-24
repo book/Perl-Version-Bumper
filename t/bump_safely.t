@@ -14,8 +14,9 @@ for my $name ( sort keys %tests ) {
     my $file = Path::Tiny->tempfile;
     $file->spew($src);
 
-    for my $max_min ( sort keys %expected ) {
-        my ( $version, $version_limit ) = split / /, $max_min;
+    for my $defn ( sort keys %expected ) {
+        my ( $version_range, $todo ) = split / /, $defn, 3;
+        my ( $version, $version_limit ) = split /-/, $version_range;
       SKIP: {
             my $perv = eval {
                 Perl::Version::Bumper->new( version => $version );
@@ -36,12 +37,14 @@ for my $name ( sort keys %tests ) {
             die $error if $error;
 
             if ( exists $expect_die{$name} ) {
-                is( $ran, U, "$name [$max_min] died" );
-                is( $file->slurp, $src, "$name [$max_min]" );
+                is( $ran, U, "$name [$version_range] died" );
+                $todo &&= todo $todo;
+                is( $file->slurp, $src, "$name [$version_range]" );
             }
             else {
-                is( $ran, D, "$name [$max_min] didn't die" );
-                is( $file->slurp, $expected{$max_min}, "$name [$max_min]" );
+                is( $ran, D, "$name [$version_range] didn't die" );
+                $todo &&= todo $todo;
+                is( $file->slurp, $expected{$defn}, "$name [$version_range]" );
             }
         }
     }
@@ -58,7 +61,7 @@ $o = new Foo;
 --- v5.36
 use v5.10;
 $o = new Foo;
---- v5.16 v5.12
+--- v5.16-v5.12
 $o = new Foo;
 ########## indirect
 { package Foo }
