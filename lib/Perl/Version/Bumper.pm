@@ -212,7 +212,7 @@ my sub _version_stmts ($doc) {
 
 # the 'bitwise' feature may break bitwise operators
 # so disable it when bitwise operators are detected
-my sub _handle_feature_bitwise ( $self, $doc ) {
+my sub _handle_feature_bitwise ( $doc ) {
 
     # this only matters for code using bitwise ops
     return unless $doc->find(
@@ -238,6 +238,8 @@ my sub _handle_feature_bitwise ( $self, $doc ) {
     $insert_point->insert_before( $_->remove ) for $todo_comment->elements;
 
 }
+
+# PRIVATE "METHODS"
 
 my sub _remove_enabled_features ( $self, $doc, $old_num ) {
     my ( %enabled_in_perl, %enabled_in_code );
@@ -284,7 +286,7 @@ my sub _remove_enabled_features ( $self, $doc, $old_num ) {
     }
 
     # handle specific features
-    _handle_feature_bitwise( $self, $doc )
+    _handle_feature_bitwise($doc)
       if $old_num < 5.028               # code from before 'bitwise'
       && $bundle_num >= 5.028           # bumped to after 'bitwise'
       && !$enabled_in_code{bitwise};    # and not enabling the feature
