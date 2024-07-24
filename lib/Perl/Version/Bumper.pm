@@ -210,6 +210,35 @@ my sub _version_stmts ($doc) {
     return $version_stmts ? @$version_stmts : ();
 }
 
+# the 'bitwise' feature may break bitwise operators
+# so disable it when bitwise operators are detected
+my sub _handle_feature_bitwise ( $self, $doc ) {
+
+    # this only matters for code using bitwise ops
+    return unless $doc->find(
+        sub ( $root, $elem ) {
+            $elem->isa('PPI::Token::Operator') && $elem =~ /\A[&|~^]=?\z/;
+        }
+    );
+
+    # the `use VERSION` inserted earlier is always the last one in the doc
+    my $insert_point       = ( _version_stmts($doc) )[-1];
+    my $no_feature_bitwise = PPI::Document->new( \"no feature 'bitwise';\n" );
+    $insert_point->insert_after( $_->remove ) for $no_feature_bitwise->elements;
+
+    # also add a TODO comment to warn users
+    $insert_point = $insert_point->snext_sibling;
+    my $todo_comment = PPI::Document->new( \<<~ 'TODO_COMMENT');
+
+    # IMPORTANT: Please double-check the use of bitwise operators
+    # before removing the `no feature 'bitwise';` line below.
+    # See manual pages perlfeature (section "The 'bitwise' feature")
+    # and perlop (section "Bitwise String Operators") for details.
+    TODO_COMMENT
+    $insert_point->insert_before( $_->remove ) for $todo_comment->elements;
+
+}
+
 my sub _remove_enabled_features ( $self, $doc, $old_num ) {
     my ( %enabled_in_perl, %enabled_in_code );
     my $bundle = $self->version =~ s/\Av//r;
@@ -219,13 +248,6 @@ my sub _remove_enabled_features ( $self, $doc, $old_num ) {
     my $bundle_num = version->parse( $self->version )->numify;
     @enabled_in_perl{qw( postderef lexical_subs )} = ()
       if $bundle_num >= 5.026;
-
-    # the 'bitwise' feature may break bitwise operators
-    my $code_uses_bitwise_ops = $doc->find(
-        sub ( $root, $elem ) {
-            $elem->isa('PPI::Token::Operator') && $elem =~ /\A[&|~^]=?\z/;
-        }
-    );
 
     # drop features enabled in this bundle
     # (also if they were enabled with `use experimental`)
@@ -261,6 +283,12 @@ my sub _remove_enabled_features ( $self, $doc, $old_num ) {
         else { _drop_statement($no_feature); }
     }
 
+    # handle specific features
+    _handle_feature_bitwise( $self, $doc )
+      if $old_num < 5.028               # code from before 'bitwise'
+      && $bundle_num >= 5.028           # bumped to after 'bitwise'
+      && !$enabled_in_code{bitwise};    # and not enabling the feature
+
     # drop experimental warnings, if any
     for my $warn_line ( grep $_->type eq 'no', _find_include( warnings => $doc ) ) {
         my @old_args = _ppi_list_to_perl_list( $warn_line->arguments );
@@ -283,33 +311,6 @@ my sub _remove_enabled_features ( $self, $doc, $old_num ) {
     # strict is automatically enabled with 5.12
     if ( $bundle_num >= 5.012 ) {
         _drop_bare( use => strict => $doc );
-    }
-
-    # explicitly disable the 'bitwise' feature for
-    if (
-        $old_num < 5.028                  # code from before 'bitwise'
-        && $bundle_num >= 5.028           # bumped to after 'bitwise'
-        && $code_uses_bitwise_ops         # using bitwise ops
-        && !$enabled_in_code{bitwise}     # but not the bitwise feature
-      )
-    {
-        # the `use VERSION` inserted earlier is always the last one in the doc
-        my $insert_point = ( _version_stmts($doc) )[-1];
-        my $no_feature_bitwise =
-          PPI::Document->new( \"no feature 'bitwise';\n" );
-        $insert_point->insert_after( $_->remove )
-          for $no_feature_bitwise->elements;
-
-        # also add a TODO comment to warn users
-        $insert_point = $insert_point->snext_sibling;
-        my $todo_comment = PPI::Document->new( \<<~ 'TODO_COMMENT');
-
-          # IMPORTANT: Please double-check the use of bitwise operators
-          # before removing the `no feature 'bitwise';` line below.
-          # See manual pages perlfeature (section "The 'bitwise' feature")
-          # and perlop (section "Bitwise String Operators") for details.
-          TODO_COMMENT
-        $insert_point->insert_before( $_->remove ) for $todo_comment->elements;
     }
 
     # warnings are automatically enabled with 5.36
