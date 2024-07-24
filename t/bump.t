@@ -67,6 +67,14 @@ no strict 'refs';
 use v5.28;
 ...;
 no strict 'refs';
+########## reorder no strict
+...;
+no strict 'refs';
+use v5.14;
+--- v5.28
+use v5.28;
+...;
+no strict 'refs';
 ########## same version, move after package
 use v5.28;
 package Foo;
@@ -295,6 +303,20 @@ no warnings "once";
 --- v5.36
 use v5.36;
 no warnings "once";
+########## no warning before v line
+no warnings 'once';
+use v5.14;
+--- v5.28
+use v5.28;
+no warnings 'once';
+--- v5.36
+use v5.36;
+no warnings 'once';
+########## no warning before v5.36 line
+no warnings 'once';
+use v5.36;
+--- v5.36 use v5.36 re-enables all warnings
+use v5.36;
 ########## keep possibly meaningful comments
 use v5.28; ## no critic
 --- v5.28
@@ -376,3 +398,31 @@ my $z |.= $x;
 --- v5.36
 use v5.36;
 my $z |.= $x;
+########## signatures + empty prototype
+sub foo () { }
+--- v5.18
+use v5.18;
+sub foo () { }
+--- v5.28
+use v5.28;
+sub foo () { }
+--- v5.36 add prototype support
+use v5.36;
+sub foo :prototype() { }
+########## signatures + scalar prototype
+sub foo ($) { }
+--- v5.36 add prototype support
+use v5.36;
+sub foo :prototype($) { }
+########## experimental signatures +  prototype
+use v5.20;
+use feature 'signatures';
+sub foo ($) { } # valid signature, not a prototype
+--- v5.36
+use v5.36;
+sub foo ($) { } # valid signature, not a prototype
+########## a prototype that's not a signature
+sub money ($$) { }
+--- v5.36 add prototype support
+use v5.36;
+sub money :prototype($$) { }

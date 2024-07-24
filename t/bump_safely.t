@@ -97,3 +97,19 @@ use v5.8.5;
 use strict;
 --- v5.28
 use v5.28;
+########## signatures + empty prototype
+sub foo () { }
+--- v5.18
+use v5.18;
+sub foo () { }
+--- v5.28
+use v5.28;
+sub foo () { }
+--- v5.36 todo
+use v5.36;
+sub foo :prototype() { }
+########## a prototype that's not a signature
+sub money ($$) { }
+--- v5.36 add prototype support
+use v5.36;
+sub money :prototype($$) { }
