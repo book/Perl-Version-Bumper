@@ -406,12 +406,12 @@ sub foo () { }
 --- v5.28
 use v5.28;
 sub foo () { }
---- v5.36 add prototype support
+--- v5.36
 use v5.36;
 sub foo :prototype() { }
 ########## signatures + scalar prototype
 sub foo ($) { }
---- v5.36 add prototype support
+--- v5.36
 use v5.36;
 sub foo :prototype($) { }
 ########## experimental signatures +  prototype
@@ -423,6 +423,14 @@ use v5.36;
 sub foo ($) { } # valid signature, not a prototype
 ########## a prototype that's not a signature
 sub money ($$) { }
---- v5.36 add prototype support
+--- v5.36
 use v5.36;
 sub money :prototype($$) { }
+########## prototype on anonymous subs
+my $sub = sub ($@) { ... }
+--- v5.28
+use v5.28;
+my $sub = sub ($@) { ... }
+--- v5.36
+use v5.36;
+my $sub = sub :prototype($@) { ... }
