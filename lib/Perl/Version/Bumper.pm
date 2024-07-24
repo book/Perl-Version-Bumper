@@ -211,13 +211,13 @@ my sub _version_stmts ($doc) {
 }
 
 my sub _remove_enabled_features ( $self, $doc, $old_num ) {
-    my %enabled;
+    my ( %enabled_in_perl, %enabled_in_code );
     my $bundle = $self->version =~ s/\Av//r;
-    @enabled{ $feature::feature_bundle{$bundle}->@* } = ();
+    @enabled_in_perl{ $feature::feature_bundle{$bundle}->@* } = ();
 
     # extra features to remove, not listed in %feature::feature_bundle
     my $bundle_num = version->parse( $self->version )->numify;
-    @enabled{qw( postderef lexical_subs )} = ()
+    @enabled_in_perl{qw( postderef lexical_subs )} = ()
       if $bundle_num >= 5.026;
 
     # the 'bitwise' feature may break bitwise operators
@@ -226,15 +226,14 @@ my sub _remove_enabled_features ( $self, $doc, $old_num ) {
             $elem->isa('PPI::Token::Operator') && $elem =~ /\A[&|~^]=?\z/;
         }
     );
-    my $code_uses_bitwise_feature;
 
     # drop features enabled in this bundle
     # (also if they were enabled with `use experimental`)
     for my $module (qw( feature experimental )) {
         for my $use_line ( grep $_->type eq 'use', _find_include( $module => $doc ) ) {
             my @old_args = _ppi_list_to_perl_list( $use_line->arguments );
-            $code_uses_bitwise_feature = grep $_ eq 'bitwise', @old_args;
-            my @new_args = grep !exists $enabled{$_}, @old_args;
+            $enabled_in_code{$_}++ for @old_args;
+            my @new_args = grep !exists $enabled_in_perl{$_}, @old_args;
             next if @new_args == @old_args;    # nothing to remove
             if (@new_args) {    # replace old statement with a smaller one
                 my $new_use_line = PPI::Document->new(
@@ -250,7 +249,7 @@ my sub _remove_enabled_features ( $self, $doc, $old_num ) {
     # drop previously disabled obsolete features
     for my $no_feature ( grep $_->type eq 'no', _find_include( feature => $doc ) ) {
         my @old_args = _ppi_list_to_perl_list( $no_feature->arguments );
-        my @new_args = grep exists $enabled{$_}, @old_args;
+        my @new_args = grep exists $enabled_in_perl{$_}, @old_args;
         next if @new_args == @old_args;    # nothing to remove
         if (@new_args) {    # replace old statement with a smaller one
             my $new_no_feature = PPI::Document->new(
@@ -266,7 +265,7 @@ my sub _remove_enabled_features ( $self, $doc, $old_num ) {
     for my $warn_line ( grep $_->type eq 'no', _find_include( warnings => $doc ) ) {
         my @old_args = _ppi_list_to_perl_list( $warn_line->arguments );
         next unless grep /\Aexperimental::/, @old_args;
-        my @new_args = grep !exists $enabled{s/\Aexperimental:://r},
+        my @new_args = grep !exists $enabled_in_perl{s/\Aexperimental:://r},
           grep /\Aexperimental::/, @old_args;
         my @keep_args = grep !/\Aexperimental::/, @old_args;
         next if @new_args == @old_args;    # nothing to remove
@@ -291,7 +290,7 @@ my sub _remove_enabled_features ( $self, $doc, $old_num ) {
         $old_num < 5.028                  # code from before 'bitwise'
         && $bundle_num >= 5.028           # bumped to after 'bitwise'
         && $code_uses_bitwise_ops         # using bitwise ops
-        && !$code_uses_bitwise_feature    # but not the bitwise feature
+        && !$enabled_in_code{bitwise}     # but not the bitwise feature
       )
     {
         # the `use VERSION` inserted earlier is always the last one in the doc
