@@ -448,7 +448,7 @@ sub bump_ppi ( $self, $doc ) {
     return $doc;
 }
 
-sub bump ( $self, $code, $source = 'input code' ) {
+sub bump ( $self, $code ) {
     return $code unless length $code;    # don't touch the empty string
 
     my $doc = PPI::Document->new( \$code );
