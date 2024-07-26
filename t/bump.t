@@ -245,7 +245,6 @@ use strict;
 use feature 'say';
 use feature 'state';
 use feature 'current_sub';
-use feature 'bareword_filehandles';
 use feature 'bitwise';
 use feature 'evalbytes';
 use feature 'fc';
