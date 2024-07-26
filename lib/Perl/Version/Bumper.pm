@@ -212,7 +212,7 @@ my sub _version_stmts ($doc) {
     return $version_stmts ? @$version_stmts : ();
 }
 
-# the 'bitwise' feature may break bitwise operators
+# The 'bitwise' feature may break bitwise operators,
 # so disable it when bitwise operators are detected
 my sub _handle_feature_bitwise ( $doc ) {
 
@@ -241,7 +241,24 @@ my sub _handle_feature_bitwise ( $doc ) {
 
 }
 
-# the 'signature' feature needs prototypes to be updated
+# The 'bareword_filehandles' feature exists only since v5.34,
+# so it can only be disabled using the feature after that.
+# Older Perl could use `no bareword::filehandles` instead.
+my sub _handle_feature_bareword_filehandles ( $doc, $bundle_num ) {
+    my @no_bareword_filehandles = grep $_->type eq 'no',
+      _find_include( 'bareword::filehandles' => $doc );
+    for my $no_bareword_filehandles (@no_bareword_filehandles) {
+        if ( $bundle_num >= 5.034 ) {
+            my $no_feature_bareword_filehandles =
+              PPI::Document->new( \"no feature 'bareword_filehandles';\n" );
+            $no_bareword_filehandles->insert_after( $_->remove )
+              for $no_feature_bareword_filehandles->elements;
+        }
+        _drop_statement($no_bareword_filehandles);
+    }
+}
+
+# The 'signature' feature needs prototypes to be updated.
 my sub _handle_feature_signatures ($doc) {
 
     # find all subs with prototypes
@@ -307,6 +324,9 @@ my sub _remove_enabled_features ( $self, $doc, $old_num ) {
       if $old_num < 5.028               # code from before 'bitwise'
       && $bundle_num >= 5.028           # bumped to after 'bitwise'
       && !$enabled_in_code{bitwise};    # and not enabling the feature
+    _handle_feature_bareword_filehandles( $doc, $bundle_num )
+      if $old_num < 5.034         # code from before 'bareword_filehandles'
+      && $bundle_num >= 5.034;    # bumped to after 'bareword_filehandles'
     _handle_feature_signatures($doc)
       if $old_num < 5.036                  # code from before 'signatures'
       && $bundle_num >= 5.036              # bumped to after 'signatures'
