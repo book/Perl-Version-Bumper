@@ -546,7 +546,7 @@ The target version to bump to.
 The constructor accepts both forms of Perl versions, regular
 (e.g. C<v5.36>) and floating-point (e.g. C<5.036>).
 
-To protect against simple mistaks (e.g. passing C<5.36> instead of
+To protect against simple mistakes (e.g. passing C<5.36> instead of
 C<v5.36>), the constructor does some sanity checking, and checks that
 the given version:
 
@@ -562,7 +562,7 @@ is lower than the version of the Perl currently running,
 
 =item *
 
-is even (this module targets stable Perl versionsi only).
+is even (this module targets stable Perl versions only).
 
 =back
 
