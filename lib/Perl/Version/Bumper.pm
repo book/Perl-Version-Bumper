@@ -9,34 +9,41 @@ use PPI::Token::Attribute;
 use Carp    qw( carp croak );
 use feature ();                 # to access %feature::feature_bundle
 
-use Moo;
-use namespace::clean;
-
 my $base_minor = $^V->{version}[1];     # our minor
 
-has version => (
-    is      => 'ro',
-    default => "v5.$base_minor",
-);
+sub new {
 
-around BUILDARGS => sub {
-    my ( $orig, $class, @args ) = @_;
-    my $args = $class->$orig(@args);
-    if ( $args->{version} ) {
-        my $version = version->parse( $args->{version} );
-        my ( $major, $minor ) = @{ $version->{version} };
-        croak "Major version number must be 5, not $major"
-          if $major != 5;
-        croak "Minor version number $minor > $base_minor"
-          if $minor > $base_minor;
-        croak "Minor version number $minor < 10"
-          if $minor < 10;
-        croak "Minor version number must be even, not $minor"
-          if $minor % 2;
-        $args->{version} = "v$major.$minor";
-    }
-    $args;
+    # stolen from Moo::Object
+    my $class = shift;
+    my $args = scalar @_ == 1
+      ? ref $_[0] eq 'HASH'
+        ? { %{ $_[0] } }
+        : Carp::croak("Single parameters to new() must be a HASH ref"
+            . " data => ". $_[0])
+      : @_ % 2
+        ? Carp::croak("The new() method for $class expects a hash reference or a"
+            . " key/value list. You passed an odd number of arguments")
+        : {@_}
+    ;
+
+    # handle the version attribute
+    $args->{version} //= $^V;
+    my $version = version::->parse( $args->{version} );
+    my ( $major, $minor ) = @{ $version->{version} };
+    croak "Major version number must be 5, not $major"
+      if $major != 5;
+    croak "Minor version number $minor > $base_minor"
+      if $minor > $base_minor;
+    croak "Minor version number $minor < 10"
+      if $minor < 10;
+    croak "Minor version number must be even, not $minor"
+      if $minor % 2;
+    $args->{version} = "v$major.$minor";
+
+    return bless { version => $args->{version} }, $class;
 };
+
+sub version { shift->{version} }
 
 # PRIVATE FUNCTIONS
 
@@ -312,7 +319,7 @@ sub _remove_enabled_features {
     @enabled_in_perl{ @{ $feature::feature_bundle{$bundle} } } = ();
 
     # extra features to remove, not listed in %feature::feature_bundle
-    my $bundle_num = version->parse( $self->version )->numify;
+    my $bundle_num = version::->parse( $self->version )->numify;
     @enabled_in_perl{qw( postderef lexical_subs )} = ()
       if $bundle_num >= 5.026;
 
@@ -402,7 +409,7 @@ sub _remove_enabled_features {
 
 sub _insert_version_stmt {
     my ( $self, $doc, $old_num ) = @_;
-    $old_num //= version->parse( 'v5.8' )->numify;
+    $old_num //= version::->parse( 'v5.8' )->numify;
     my $version_stmt =
       PPI::Document->new( \sprintf "use %s;\n", $self->version );
     my $insert_point = $doc->schild(0);
@@ -449,9 +456,9 @@ sub _try_compile {
 
 sub _try_bump_ppi_safely {
     my ( $self, $doc, $version_limit ) = @_;
-    my $version  = version->parse( $self->version );
+    my $version  = version::->parse( $self->version );
     my $filename = $doc->filename;
-    $version_limit = version->parse($version_limit);
+    $version_limit = version::->parse($version_limit);
 
     # try bumping down version until it compiles
     while ( $version >= $version_limit or $version = '' ) {
@@ -466,7 +473,7 @@ sub _try_bump_ppi_safely {
 
         # bump version down and repeat
         $version =
-          version->parse( 'v5.' . ( ( split /\./, $version )[1] - 2 ) );
+          version::->parse( 'v5.' . ( ( split /\./, $version )[1] - 2 ) );
     }
 
     return $version;
@@ -492,7 +499,7 @@ sub bump_ppi {
         # and add the new one at the top
         else {
             my ($use_v) = _version_stmts($doc);    # there's only one
-            my ( $old_num, $new_num ) = map version->parse($_)->numify,
+            my ( $old_num, $new_num ) = map version::->parse($_)->numify,
               $use_v->version, $self->version;
             if ( $old_num <= $new_num ) {
                 _insert_version_stmt( $self, $doc, $old_num );
@@ -538,7 +545,7 @@ sub bump_file_safely {
     $version_limit //= do {
         my @version_stmts = _version_stmts($doc);
         @version_stmts
-          ? version->parse( $version_stmts[0]->version )->normal =~ s/\.0\z//r
+          ? version::->parse( $version_stmts[0]->version )->normal =~ s/\.0\z//r
           : 'v5.10';
     };
 
