@@ -9,7 +9,8 @@ use PPI::Token::Attribute;
 use Carp    qw( carp croak );
 use feature ();                 # to access %feature::feature_bundle
 
-my $base_minor = $^V->{version}[1];     # our minor
+my $default_minor = $^V->{version}[1];    # the current perl minor version
+$default_minor -= $default_minor % 2;     # rounded down to the latest stable
 
 sub new {
 
@@ -32,8 +33,8 @@ sub new {
     my ( $major, $minor ) = @{ $version->{version} };
     croak "Major version number must be 5, not $major"
       if $major != 5;
-    croak "Minor version number $minor > $base_minor"
-      if $minor > $base_minor;
+    croak "Minor version number $minor > $default_minor"
+      if $minor > $default_minor;
     croak "Minor version number $minor < 10"
       if $minor < 10;
     croak "Minor version number must be even, not $minor"

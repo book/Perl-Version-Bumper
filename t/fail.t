@@ -2,8 +2,8 @@ use Test2::V0;
 
 use Perl::Version::Bumper;
 
-# this Perl's minor version
-my $this_minor = $^V->{version}[1];
+my $this_minor = $^V->{version}[1];    # this Perl's minor version
+$this_minor-- if $this_minor % 2;      # rounded down to the latest stable
 
 # constructor errors
 my @errors = (
