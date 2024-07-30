@@ -31,7 +31,7 @@ $o = new Foo;
 --- v5.36
 use v5.10;
 $o = new Foo;
---- v5.16-v5.12
+--- v5.20-v5.12
 $o = new Foo;
 ########## indirect
 { package Foo }
