@@ -12,12 +12,12 @@ use feature ();                 # to access %feature::feature_bundle
 use Moo;
 use namespace::clean;
 
+my $base_minor = $^V->{version}[1];     # our minor
+
 has version => (
     is      => 'ro',
-    default => 'v5.28',
+    default => "v5.$base_minor",
 );
-
-my $base_minor = $^V->{version}[1];     # our minor
 
 around BUILDARGS => sub {
     my ( $orig, $class, @args ) = @_;

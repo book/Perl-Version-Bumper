@@ -27,6 +27,10 @@ for my $e (@errors) {
     like( $@, $error, ".. expected error message" );
 }
 
+# check the default
+is( Perl::Version::Bumper->new->version,
+    "v5.$this_minor", "default version is v5.$this_minor" );
+
 # version normalisation
 my %version = qw(
   v5.10.1     v5.10
