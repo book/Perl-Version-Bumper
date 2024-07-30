@@ -18,6 +18,7 @@ my @errors = (
     [ '5.28'   => qr{\AMinor version number 280 > $this_minor } ],
     [ 'v5.100' => qr{\AMinor version number 100 > $this_minor } ],
     [ 'v5.8'   => qr{\AMinor version number 8 < 10 } ],
+    [ 'not'    => qr{\AInvalid version format \(non-numeric data\)} ],
 );
 
 for my $e (@errors) {
