@@ -240,6 +240,27 @@ my sub _handle_feature_bitwise ( $doc ) {
 
 }
 
+# The 'indirect' feature exists only since v5.32,
+# so it can only be disabled using the feature after that.
+# Older Perl could use `no indirect` instead.
+# (There was a slight difference though:
+# `use feature 'indirect'` produces a compilation error,
+# while `no indirect` produces a runtime error.)
+sub _handle_feature_indirect {
+    my ( $doc, $bundle_num ) = @_;
+    my @no_indirect = grep $_->type eq 'no',
+      _find_include( indirect => $doc );
+    for my $no_indirect (@no_indirect) {
+        if ( $bundle_num >= 5.032 ) {
+            my $no_feature_indirect =
+              PPI::Document->new( \"no feature 'indirect';\n" );
+            $no_indirect->insert_after( $_->remove )
+              for $no_feature_indirect->elements;
+        }
+        _drop_statement($no_indirect);
+    }
+}
+
 # The 'bareword_filehandles' feature exists only since v5.34,
 # so it can only be disabled using the feature after that.
 # Older Perl could use `no bareword::filehandles` instead.
@@ -308,6 +329,9 @@ my sub _remove_enabled_features ( $self, $doc, $old_num ) {
       if $old_num < 5.028               # code from before 'bitwise'
       && $bundle_num >= 5.028           # bumped to after 'bitwise'
       && !$enabled_in_code{bitwise};    # and not enabling the feature
+    _handle_feature_indirect( $doc, $bundle_num )
+      if $old_num < 5.032         # code from before 'indirect'
+      && $bundle_num >= 5.032;    # bumped to after 'bareword_filehandles'
     _handle_feature_bareword_filehandles( $doc, $bundle_num )
       if $old_num < 5.034         # code from before 'bareword_filehandles'
       && $bundle_num >= 5.034;    # bumped to after 'bareword_filehandles'
