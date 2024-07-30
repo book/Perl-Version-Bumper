@@ -1,5 +1,5 @@
 package Perl::Version::Bumper;
-use v5.28;
+use v5.16;    # %feature::feature_bundle wasn't accessible before v5.16
 use warnings;
 
 use Path::Tiny;
@@ -12,8 +12,6 @@ use feature ();                 # to access %feature::feature_bundle
 use Moo;
 use namespace::clean;
 
-use experimental 'signatures';
-
 has version => (
     is      => 'ro',
     default => 'v5.28',
@@ -21,11 +19,12 @@ has version => (
 
 my $base_minor = $^V->{version}[1];     # our minor
 
-around BUILDARGS => sub ( $orig, $class, @args ) {
+around BUILDARGS => sub {
+    my ( $orig, $class, @args ) = @_;
     my $args = $class->$orig(@args);
     if ( $args->{version} ) {
         my $version = version->parse( $args->{version} );
-        my ( $major, $minor ) = $version->{version}->@*;
+        my ( $major, $minor ) = @{ $version->{version} };
         croak "Major version number must be 5, not $major"
           if $major != 5;
         croak "Minor version number $minor > $base_minor"
@@ -41,19 +40,19 @@ around BUILDARGS => sub ( $orig, $class, @args ) {
 
 # PRIVATE FUNCTIONS
 
-my sub __evaluate {
-    map ref
+sub __evaluate {
+    map ref()
       ? $_->[0] eq 'CODE'
           ? sub { }    # leave anonymous subs as is
-          : $_->[0] eq '[' ? [ __SUB__->( $_->@[ 1 .. $#$_ ] ) ]    # ARRAY
-        : $_->[0] eq '{' ? { __SUB__->( $_->@[ 1 .. $#$_ ] ) }      # HASH
-        : __SUB__->( $_->@[ 1 .. $#$_ ] )    # LIST (flattened)
+          : $_->[0] eq '[' ? [ __SUB__->( @$_[ 1 .. $#$_ ] ) ]    # ARRAY
+        : $_->[0] eq '{' ? { __SUB__->( @$_[ 1 .. $#$_ ] ) }      # HASH
+        : __SUB__->( @$_[ 1 .. $#$_ ] )    # LIST (flattened)
       : $_,                                  # SCALAR
       @_;
 }
 
 # given a list of PPI tokens, construct a Perl data structure
-my sub _ppi_list_to_perl_list {
+sub _ppi_list_to_perl_list {
 
     # are there constants we ought to know about?
     my $constants = ref $_[-1] eq 'HASH' ? pop @_ : {};
@@ -66,10 +65,10 @@ my sub _ppi_list_to_perl_list {
         if ( $token->isa('PPI::Token::Structure') ) {
             if ( $token =~ /\A[[{(]\z/ ) {    # opening
                 $ptr = $token eq '{' && $prev && $prev eq 'sub'    # sub { ... }
-                  ? do { pop $stack[-1]->@*; ['CODE'] }    # drop 'sub' token
+                  ? do { pop @{ $stack[-1] }; ['CODE'] }    # drop 'sub' token
                   : ["$token"];
-                push $stack[-1]->@*, $ptr;
-                push @stack,         $ptr;
+                push @{ $stack[-1] }, $ptr;
+                push @stack,          $ptr;
             }
             elsif ( $token =~ /\A[]})]\z/ ) {                      # closing
                 pop @stack;
@@ -131,7 +130,8 @@ my sub _ppi_list_to_perl_list {
     return __evaluate(@$root);
 }
 
-my sub _drop_statement ( $stmt, $keep_comments = '' ) {
+sub _drop_statement {
+    my ( $stmt, $keep_comments ) = @_;
 
     # remove non-significant elements before the statement
     while ( my $prev_sibling = $stmt->previous_sibling ) {
@@ -167,9 +167,11 @@ my sub _drop_statement ( $stmt, $keep_comments = '' ) {
     $stmt->remove;
 }
 
-my sub _drop_bare ( $type, $module, $doc ) {
+sub _drop_bare {
+   my ( $type, $module, $doc ) = @_;
     my $use_module = $doc->find(
-        sub ( $root, $elem ) {
+        sub {
+            my ( $root, $elem ) = @_;
             return 1
               if $elem->isa('PPI::Statement::Include')
               && $elem->module eq $module
@@ -184,9 +186,11 @@ my sub _drop_bare ( $type, $module, $doc ) {
     return;
 }
 
-my sub _find_include ( $module, $doc ) {
+sub _find_include {
+   my ( $module, $doc ) = @_;
     my $found = $doc->find(
-        sub ( $root, $elem ) {
+        sub {
+            my ( $root, $elem ) = @_;
             return 1
               if $elem->isa('PPI::Statement::Include')
               && $elem->module eq $module;
@@ -199,9 +203,11 @@ my sub _find_include ( $module, $doc ) {
     return @$found;
 }
 
-my sub _version_stmts ($doc) {
+sub _version_stmts {
+   my ($doc) = @_;
     my $version_stmts = $doc->find(
-        sub ( $root, $elem ) {
+        sub {
+            my ( $root, $elem ) = @_;
             return 1 if $elem->isa('PPI::Statement::Include') && $elem->version;
             return '';
         }
@@ -213,11 +219,13 @@ my sub _version_stmts ($doc) {
 
 # The 'bitwise' feature may break bitwise operators,
 # so disable it when bitwise operators are detected
-my sub _handle_feature_bitwise ( $doc ) {
+sub _handle_feature_bitwise {
+   my ( $doc ) = @_;
 
     # this only matters for code using bitwise ops
     return unless $doc->find(
-        sub ( $root, $elem ) {
+        sub {
+            my ( $root, $elem ) = @_;
             $elem->isa('PPI::Token::Operator') && $elem =~ /\A[&|~^]=?\z/;
         }
     );
@@ -229,7 +237,7 @@ my sub _handle_feature_bitwise ( $doc ) {
 
     # also add a TODO comment to warn users
     $insert_point = $insert_point->snext_sibling;
-    my $todo_comment = PPI::Document->new( \<<~ 'TODO_COMMENT');
+    my $todo_comment = PPI::Document->new( \( << '    TODO_COMMENT' =~ s/^    //grm ) );
 
     # IMPORTANT: Please double-check the use of bitwise operators
     # before removing the `no feature 'bitwise';` line below.
@@ -264,7 +272,8 @@ sub _handle_feature_indirect {
 # The 'bareword_filehandles' feature exists only since v5.34,
 # so it can only be disabled using the feature after that.
 # Older Perl could use `no bareword::filehandles` instead.
-my sub _handle_feature_bareword_filehandles ( $doc, $bundle_num ) {
+sub _handle_feature_bareword_filehandles {
+    my ( $doc, $bundle_num ) = @_;
     my @no_bareword_filehandles = grep $_->type eq 'no',
       _find_include( 'bareword::filehandles' => $doc );
     for my $no_bareword_filehandles (@no_bareword_filehandles) {
@@ -279,7 +288,8 @@ my sub _handle_feature_bareword_filehandles ( $doc, $bundle_num ) {
 }
 
 # The 'signature' feature needs prototypes to be updated.
-my sub _handle_feature_signatures ($doc) {
+sub _handle_feature_signatures {
+    my ($doc) = @_;
 
     # find all subs with prototypes
     my $prototypes = $doc->find('PPI::Token::Prototype');
@@ -295,10 +305,11 @@ my sub _handle_feature_signatures ($doc) {
 
 # PRIVATE "METHODS"
 
-my sub _remove_enabled_features ( $self, $doc, $old_num ) {
+sub _remove_enabled_features {
+    my ( $self, $doc, $old_num ) = @_;
     my ( %enabled_in_perl, %enabled_in_code );
     my $bundle = $self->version =~ s/\Av//r;
-    @enabled_in_perl{ $feature::feature_bundle{$bundle}->@* } = ();
+    @enabled_in_perl{ @{ $feature::feature_bundle{$bundle} } } = ();
 
     # extra features to remove, not listed in %feature::feature_bundle
     my $bundle_num = version->parse( $self->version )->numify;
@@ -389,7 +400,9 @@ my sub _remove_enabled_features ( $self, $doc, $old_num ) {
     return;
 }
 
-my sub _insert_version_stmt ( $self, $doc, $old_num = version->parse( 'v5.8' )->numify ) {
+sub _insert_version_stmt {
+    my ( $self, $doc, $old_num ) = @_;
+    $old_num //= version->parse( 'v5.8' )->numify;
     my $version_stmt =
       PPI::Document->new( \sprintf "use %s;\n", $self->version );
     my $insert_point = $doc->schild(0);
@@ -415,7 +428,8 @@ my sub _insert_version_stmt ( $self, $doc, $old_num = version->parse( 'v5.8' )->
     _remove_enabled_features( $self, $doc, $old_num );
 }
 
-my sub _try_compile ( $file ) {
+sub _try_compile {
+    my ( $file ) = @_;
 
     # redirect STDERR for quietness
     my $tmperr = Path::Tiny->tempfile;
@@ -433,7 +447,8 @@ my sub _try_compile ( $file ) {
     return !$exit;    # 0 means success
 }
 
-my sub _try_bump_ppi_safely ( $self, $doc, $version_limit ) {
+sub _try_bump_ppi_safely {
+    my ( $self, $doc, $version_limit ) = @_;
     my $version  = version->parse( $self->version );
     my $filename = $doc->filename;
     $version_limit = version->parse($version_limit);
@@ -459,7 +474,8 @@ my sub _try_bump_ppi_safely ( $self, $doc, $version_limit ) {
 
 # PUBLIC METHOS
 
-sub bump_ppi ( $self, $doc ) {
+sub bump_ppi {
+    my ( $self, $doc ) = @_;
     $doc = $doc->clone;
     my $source = $doc->filename // 'input code';
 
@@ -491,7 +507,8 @@ sub bump_ppi ( $self, $doc ) {
     return $doc;
 }
 
-sub bump ( $self, $code ) {
+sub bump {
+    my ( $self, $code ) = @_;
     return $code unless length $code;    # don't touch the empty string
 
     my $doc = PPI::Document->new( \$code );
@@ -500,7 +517,8 @@ sub bump ( $self, $code ) {
     return $self->bump_ppi($doc)->serialize;
 }
 
-sub bump_file ( $self, $file ) {
+sub bump_file {
+    my ( $self, $file ) = @_;
     $file = Path::Tiny->new($file);
     my $code   = $file->slurp;
     my $bumped = $self->bump( $code, $file );
@@ -511,7 +529,8 @@ sub bump_file ( $self, $file ) {
     return;
 }
 
-sub bump_file_safely ( $self, $file, $version_limit = undef ) {
+sub bump_file_safely {
+    my ( $self, $file, $version_limit ) = @_;
     $file = Path::Tiny->new($file);
     my $code = $file->slurp;
     my $doc  = PPI::Document->new( \$code, filename => $file );
