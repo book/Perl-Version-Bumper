@@ -303,6 +303,19 @@ my sub _remove_enabled_features ( $self, $doc, $old_num ) {
         }
     }
 
+    # handle specific features
+    _handle_feature_bitwise($doc)
+      if $old_num < 5.028               # code from before 'bitwise'
+      && $bundle_num >= 5.028           # bumped to after 'bitwise'
+      && !$enabled_in_code{bitwise};    # and not enabling the feature
+    _handle_feature_bareword_filehandles( $doc, $bundle_num )
+      if $old_num < 5.034         # code from before 'bareword_filehandles'
+      && $bundle_num >= 5.034;    # bumped to after 'bareword_filehandles'
+    _handle_feature_signatures($doc)
+      if $old_num < 5.036                  # code from before 'signatures'
+      && $bundle_num >= 5.036              # bumped to after 'signatures'
+      && !$enabled_in_code{signatures};    # and not enabling the feature
+
     # drop previously disabled obsolete features
     for my $no_feature ( grep $_->type eq 'no', _find_include( feature => $doc ) ) {
         my @old_args = _ppi_list_to_perl_list( $no_feature->arguments );
@@ -317,19 +330,6 @@ my sub _remove_enabled_features ( $self, $doc, $old_num ) {
         }
         else { _drop_statement($no_feature); }
     }
-
-    # handle specific features
-    _handle_feature_bitwise($doc)
-      if $old_num < 5.028               # code from before 'bitwise'
-      && $bundle_num >= 5.028           # bumped to after 'bitwise'
-      && !$enabled_in_code{bitwise};    # and not enabling the feature
-    _handle_feature_bareword_filehandles( $doc, $bundle_num )
-      if $old_num < 5.034         # code from before 'bareword_filehandles'
-      && $bundle_num >= 5.034;    # bumped to after 'bareword_filehandles'
-    _handle_feature_signatures($doc)
-      if $old_num < 5.036                  # code from before 'signatures'
-      && $bundle_num >= 5.036              # bumped to after 'signatures'
-      && !$enabled_in_code{signatures};    # and not enabling the feature
 
     # drop experimental warnings, if any
     for my $warn_line ( grep $_->type eq 'no', _find_include( warnings => $doc ) ) {
