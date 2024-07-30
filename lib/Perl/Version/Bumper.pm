@@ -378,8 +378,9 @@ sub _remove_enabled_features {
         my @new_args = grep !exists $enabled_in_perl{s/\Aexperimental:://r},
           grep /\Aexperimental::/, @old_args;
         my @keep_args = grep !/\Aexperimental::/, @old_args;
-        next if @new_args == @old_args;    # nothing to remove
-        if ( @new_args || @keep_args ) {   # replace old statement
+        next if @new_args == @old_args    # nothing to remove
+          || @new_args + @keep_args == @old_args;
+        if ( @new_args || @keep_args ) {    # replace old statement
             my $new_warn_line = PPI::Document->new(
                 \"no warnings @{[ join ', ', map qq{'$_'}, @new_args, @keep_args]};"
             );
