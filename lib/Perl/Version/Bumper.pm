@@ -255,42 +255,44 @@ sub _handle_feature_bitwise {
 
 }
 
-# The 'indirect' feature exists only since v5.32,
-# so it can only be disabled using the feature after that.
-# Older Perl could use `no indirect` instead.
-# (There was a slight difference though:
-# `use feature 'indirect'` produces a compilation error,
-# while `no indirect` produces a runtime error.)
-sub _handle_feature_indirect {
+# The "backwards compatibility features" were created so that they
+# could be manually disabled (being considered bad practice), until they
+# were disabled by default.
+#
+# This function replaces the replacement CPAN modules by the feature
+# only if the version we bump to knows about the feature.
+sub _handle_backwards_compatibility_features {
     my ( $doc, $bundle_num ) = @_;
-    my @no_indirect = grep $_->type eq 'no',
-      _find_include( indirect => $doc );
-    for my $no_indirect (@no_indirect) {
-        if ( $bundle_num >= 5.032 ) {
-            my $no_feature_indirect =
-              PPI::Document->new( \"no feature 'indirect';\n" );
-            $no_indirect->insert_after( $_->remove )
-              for $no_feature_indirect->elements;
+    state $backwards = {
+        bareword_filehandles => {
+            available   => 5.034,    # numeric value for easier comparisons
+            disabled    => 5.038,    # (not used at the moment)
+            replacement => 'bareword::filehandles',
+        },
+        indirect => {                # produces a compilation error
+            available   => 5.032,
+            disabled    => 5.036,
+            replacement => 'indirect',    # produces a run-time error
+        },
+        multidimensional => {
+            available   => 5.034,
+            disabled    => 5.036,
+            replacement => 'multidimensional',
+        },
+    };
+    for my $feature ( keys %$backwards ) {
+        if ( $bundle_num >= $backwards->{$feature}{available} ) {
+            my $replacement    = $backwards->{$feature}{replacement};
+            my @no_replacement = grep $_->type eq 'no',
+              _find_include( $replacement => $doc );
+            for my $no_replacement (@no_replacement) {
+                my $no_feature =
+                  PPI::Document->new( \"no feature '$feature';\n" );
+                $no_replacement->insert_after( $_->remove )
+                  for $no_feature->elements;
+                _drop_statement($no_replacement);
+            }
         }
-        _drop_statement($no_indirect);
-    }
-}
-
-# The 'bareword_filehandles' feature exists only since v5.34,
-# so it can only be disabled using the feature after that.
-# Older Perl could use `no bareword::filehandles` instead.
-sub _handle_feature_bareword_filehandles {
-    my ( $doc, $bundle_num ) = @_;
-    my @no_bareword_filehandles = grep $_->type eq 'no',
-      _find_include( 'bareword::filehandles' => $doc );
-    for my $no_bareword_filehandles (@no_bareword_filehandles) {
-        if ( $bundle_num >= 5.034 ) {
-            my $no_feature_bareword_filehandles =
-              PPI::Document->new( \"no feature 'bareword_filehandles';\n" );
-            $no_bareword_filehandles->insert_after( $_->remove )
-              for $no_feature_bareword_filehandles->elements;
-        }
-        _drop_statement($no_bareword_filehandles);
     }
 }
 
@@ -343,16 +345,11 @@ sub _remove_enabled_features {
     }
 
     # handle specific features
+    _handle_backwards_compatibility_features( $doc, $bundle_num );
     _handle_feature_bitwise($doc)
       if $old_num < 5.028               # code from before 'bitwise'
       && $bundle_num >= 5.028           # bumped to after 'bitwise'
       && !$enabled_in_code{bitwise};    # and not enabling the feature
-    _handle_feature_indirect( $doc, $bundle_num )
-      if $old_num < 5.032         # code from before 'indirect'
-      && $bundle_num >= 5.032;    # bumped to after 'bareword_filehandles'
-    _handle_feature_bareword_filehandles( $doc, $bundle_num )
-      if $old_num < 5.034         # code from before 'bareword_filehandles'
-      && $bundle_num >= 5.034;    # bumped to after 'bareword_filehandles'
     _handle_feature_signatures($doc)
       if $old_num < 5.036                  # code from before 'signatures'
       && $bundle_num >= 5.036              # bumped to after 'signatures'
@@ -393,16 +390,10 @@ sub _remove_enabled_features {
     }
 
     # strict is automatically enabled with 5.12
-    if ( $bundle_num >= 5.012 ) {
-        _drop_bare( use => strict => $doc );
-    }
+    _drop_bare( use => strict => $doc ) if $bundle_num >= 5.012;
 
     # warnings are automatically enabled with 5.36
-    # no indirect is not needed any more
-    if ( $bundle_num >= 5.036 ) {
-        _drop_bare( use => warnings => $doc );
-        _drop_bare( no  => indirect => $doc );
-    }
+    _drop_bare( use => warnings => $doc ) if $bundle_num >= 5.036;
 
     return;
 }
