@@ -52,6 +52,16 @@ To simplify writing the expected results, every "use v5.XX" will have the
 The real tests start below:
 
 ########## empty
+########## just comments
+# is this a Perl program?
+--- v5.10
+# is this a Perl program?
+use v5.XX;
+########## this is the end
+__END__
+--- v5.10
+use v5.XX;
+__END__
 ########## no version
 ...;
 { use strict; ... }
