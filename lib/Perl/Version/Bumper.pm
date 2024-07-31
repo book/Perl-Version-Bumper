@@ -412,18 +412,22 @@ sub _handle_feature_signatures {
     }
 }
 
+sub _features_enabled_in {
+    my $bundle_num = shift;
+    return
+      grep !exists $feature{$_}{disabled} || $bundle_num <  $feature{$_}{disabled},
+      grep  exists $feature{$_}{enabled}  && $bundle_num >= $feature{$_}{enabled},
+      keys %feature;
+}
+
 # PRIVATE "METHODS"
 
 sub _remove_enabled_features {
     my ( $self, $doc, $old_num ) = @_;
     my ( %enabled_in_perl, %enabled_in_code );
-    my $bundle = $self->version =~ s/\Av//r;
-    @enabled_in_perl{ @{ $feature::feature_bundle{$bundle} } } = ();
-
-    # extra features to remove, not listed in %feature::feature_bundle
+    my $bundle     = $self->version =~ s/\Av//r;
     my $bundle_num = version::->parse( $self->version )->numify;
-    @enabled_in_perl{qw( postderef lexical_subs )} = ()
-      if $bundle_num >= 5.026;
+    @enabled_in_perl{ _features_enabled_in($bundle_num) } = ();
 
     # drop features enabled in this bundle
     # (also if they were enabled with `use experimental`)
