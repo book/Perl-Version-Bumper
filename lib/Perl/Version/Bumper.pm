@@ -12,6 +12,96 @@ use feature ();                 # to access %feature::feature_bundle
 my $default_minor = $^V->{version}[1];    # the current perl minor version
 $default_minor -= $default_minor % 2;     # rounded down to the latest stable
 
+# everything we know about every feature:
+# - known:       when perl first learnt about the feature
+# - enabled:     when the feature was first enabled (may be before known)
+# - disabled:    when the feature was first disabled
+# - replacement: replacement modules for features to be deprecated / added
+
+# features are listed in the order of the perlfeature manual page
+# (the information that can't be computed is pre-filled)
+sub __build_feature {
+    my %feature = (
+        say => {
+            compat => {
+                'Perl6::Say'  => 1,    # import only
+                'Say::Compat' => 1,    # import only
+            }
+        },
+
+        # state
+        # switch
+        # unicode_strings
+        # unicode_eval
+        # evalbytes
+        # current_sub
+        array_base => { known => 5.016, enabled => 5.010, disabled => 5.016 },
+
+        # fc
+        lexical_subs  => { known => 5.018, enabled => 5.026 },
+        postderef     => { known => 5.020, enabled => 5.024 },
+        postderef_qq  => { known => 5.020 },
+        signatures    => { known => 5.020 },
+        refaliasing   => { known => 5.022 },
+        bitwise       => { known => 5.022 },
+        declared_refs => { known => 5.026 },
+        isa           => { known => 5.032 },
+        indirect      => {
+            known   => 5.032,
+            enabled => 5.010,
+            compat  => { indirect => 0 },    # import / unimport
+        },
+        multidimensional => {
+            known   => 5.034,
+            enabled => 5.010,
+            compat  => { multidimensional => 0 },    # import / unimport
+        },
+        bareword_filehandles => {
+            known   => 5.034,
+            enabled => 5.010,
+            compat  => { 'bareword::filehandles' => 0 },    # import / unimport
+        },
+        try                     => { known => 5.034 },
+        defer                   => { known => 5.036 },
+        extra_paired_delimiters => { known => 5.036 },
+    );
+
+    # update when each feature was enabled
+    for my $bundle ( map "5.$_", grep !( $_ % 2 ), 10 .. $default_minor ) {
+        my $bundle_num = version::->parse("v$bundle")->numify;
+
+        # when was the feature enabled
+        $feature{$_}{enabled} //= $bundle_num
+          for @{ $feature::feature_bundle{$bundle} };
+
+        # if it's enabled, surely we know about it
+        $feature{$_}{known} //= $bundle_num
+          for grep exists $feature{$_}{enabled}, keys %feature;
+
+        # detect when a feature was disabled
+        # (it must be known and have been enabled first)
+        for my $feature (
+               grep $bundle_num >= $feature{$_}{known}
+            && exists $feature{$_}{enabled}
+            && $bundle_num >= $feature{$_}{enabled},
+            keys %feature
+          )
+        {
+            $feature{$feature}{disabled} //= $bundle_num
+              unless grep $_ eq $feature,
+              @{ $feature::feature_bundle{$bundle} };
+        }
+
+    }
+
+    # cleanup weird artifacts (%noops in feature.pm)
+    delete $feature{$_}{disabled} for qw( postderef lexical_subs );
+
+    return \%feature;
+}
+
+my %feature = %{ __build_feature() };
+
 sub new {
 
     # stolen from Moo::Object
