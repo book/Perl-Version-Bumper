@@ -5,103 +5,130 @@ description of the test. It will be shown as part of the test message.
 
 The individual test data is itself separated in multiple sub-sections,
 marked by '---' followed by a Perl version number and an optional TODO
-message. The first part is the source code to bump, and each following
-part is the expected result for the given test version.
+message. The first sub-section is the source code to bump, and each
+following sub-section is the expected result for the given test.
 
-Tests for a version later than that of the current Perl binary will
-be skipped.
+The test is basically looping over stable Perl versions starting at v5.10
+up to the version of the perl binary running the test.
 
-Example of testing bumping some code from an unidentified version to
-v5.28, and v5.36:
+This is easier to describe with an example:
 
-    ########## this is a test
-    print "Hello, world!\n";
-    --- v5.28
-    use v5.28;
-    print "Hello, world!\n";
-    --- v5.36
-    use v5.36;
-    print "Hello, world!\n";
+    ########## <test description>
+    <input code>
+    --- <version 1>
+    <expected result 1>
+    --- <version 2> <todo text>
+    <expected result 2>
+    --- <version 3>
+    <expected result 3>
+
+The <test description> will be used to produce the individual test
+message, concatenated with the version the <input code> is being
+bumped to.
+
+From v5.10 up to <version 1>, the test expects the result to be equal
+to <input code> (for example if the input code contains a `use v5.16;`
+line, trying to update it to a lower version will not do anything).
+
+From <version 1> up to <version 2> (not included), the test expects the
+result to be equal to <expected result 1>.
+
+From <version 2> up to <version 3> (not included), the test expects the
+result to be equal to <expected result 1>. Since there's a <todo text>,
+any failure will be marked as TODO.
+
+From <version 3> up to the version of the running perl (included),
+the test expects the result to be equal to <expected result 3>.
+
+Tests stop as soon as the version of the running perl is reached,
+meaning that running the tests with an older perl might not test all
+possible cases.
+
+IMPORTANT: This implies the version numbers must be in increasing order.
+
+To simplify writing the expected results, every "use v5.XX" will have the
+"XX" replaced with the minor Perl version being tested.
 
 The real tests start below:
 
 ########## empty
---- v5.14
---- v5.28
 ########## no version
 ...;
 { use strict; ... }
---- v5.14
-use v5.14;
-...;
-{ use strict; ... }
---- 5.028
-use v5.28;
+--- v5.10
+use v5.XX;
 ...;
 { use strict; ... }
 ########## recent version
 use v5.28;
---- v5.14
+--- v5.10
 use v5.28;
 --- v5.28
-use v5.28;
-########## same version
+use v5.XX;
+########## numeric version
+use 5.028;
+--- v5.10
 use 5.028;
 --- v5.28
-use v5.28;
+use v5.XX;
 ########## move version to the top
 ...;
-use v5.14;
+use v5.10;
 no strict 'refs';
---- v5.28
-use v5.28;
+--- v5.10
+use v5.XX;
 ...;
 no strict 'refs';
 ########## reorder no strict
 ...;
 no strict 'refs';
-use v5.14;
---- v5.28
-use v5.28;
+use v5.10;
+--- v5.10
+use v5.XX;
 ...;
 no strict 'refs';
-########## same version, move after package
-use v5.28;
+########## move version after package
+use v5.10;
 package Foo;
---- v5.28
+--- v5.10
 package Foo;
-use v5.28;
-########## same version, remain after package
+use v5.XX;
+########## version remain after package
 package Foo;
-use v5.28;
---- v5.28
+use v5.10;
+--- v5.10
 package Foo;
-use v5.28;
+use v5.XX;
 ########## move to the top if package is not first
 use utf8;
 package Bar;
 use strict;
---- v5.30
-use v5.30;
+--- v5.10
+use v5.XX;
+use utf8;
+package Bar;
+use strict;
+--- v5.12
+use v5.XX;
 use utf8;
 package Bar;
 ########## move version after comments
 #!/usr/bin/env perl
 ...;
-use v5.14;
---- v5.28
+use v5.10;
+--- v5.10
 #!/usr/bin/env perl
-use v5.28;
+use v5.XX;
 ...;
 ########## a version with comments
 #!/usr/bin/env perl
 ...;
-    use v5.14  ; # some comment about use version
+    use v5.10  ; # some comment about use version
 # more stuff
 ...;
---- v5.28
+--- v5.10
 #!/usr/bin/env perl
-use v5.28;
+use v5.XX;
 ...;
 # some comment about use version
 # more stuff
@@ -112,8 +139,14 @@ use v5.28;
     use feature 'signatures';
     no warnings 'experimental::signatures', "void";
 }
+--- v5.20
+use v5.XX;
+{
+    use feature 'signatures';
+    no warnings 'experimental::signatures', "void";
+}
 --- v5.36
-use v5.36;
+use v5.XX;
 {
     no warnings 'void';
 }
@@ -122,19 +155,28 @@ BEGIN {
     use v5.20;
     use experimental 'signatures';
 }
+--- v5.20
+use v5.XX;
+BEGIN {
+    use experimental 'signatures';
+}
 --- v5.36
-use v5.36;
+use v5.XX;
 BEGIN {
 }
 ########## use version followed by stuff
 use Foo;
-use 5.020; use strict; use warnings; # comment
---- v5.28
-use v5.28;
+use 5.010; use strict; use warnings; # comment
+--- v5.10
+use v5.XX;
+use Foo;
+use strict; use warnings; # comment
+--- v5.12
+use v5.XX;
 use Foo;
 use warnings; # comment
 --- v5.36
-use v5.36;
+use v5.XX;
 use Foo;
 # comment
 ########## partial feature removal
@@ -143,69 +185,64 @@ use strict;
 use warnings;
 use feature 'lexical_subs';
 use feature 'signatures';
---- v5.22
-use v5.22;
+--- v5.20
+use v5.XX;
 use warnings;
 use feature 'lexical_subs';
 use feature 'signatures';
 --- v5.26
-use v5.26;
+use v5.XX;
 use warnings;
 use feature 'signatures';
 --- v5.36
-use v5.36;
+use v5.XX;
 ########## multiple features enabled at once
 use v5.20;
 use strict;
 use warnings;
 use feature qw( lexical_subs signatures );
 no warnings "experimental::lexical_subs", "experimental::signatures";
---- v5.22
-use v5.22;
+--- v5.20
+use v5.XX;
 use warnings;
 use feature qw( lexical_subs signatures );
 no warnings "experimental::lexical_subs", "experimental::signatures";
 --- v5.26
-use v5.26;
+use v5.XX;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 --- v5.36
-use v5.36;
+use v5.XX;
 ########## multiple features enabled at once with experimental
 use v5.20;
 use strict;
 use warnings;
 use experimental qw( lexical_subs signatures );
---- v5.22
-use v5.22;
+--- v5.20
+use v5.XX;
 use warnings;
 use experimental qw( lexical_subs signatures );
 --- v5.26
-use v5.26;
+use v5.XX;
 use warnings;
 use experimental 'signatures';
 --- v5.36
-use v5.36;
+use v5.XX;
 ########## pay attention to non-significant elements
 #!/usr/bin/env perl
-use strict; use warnings; use v5.24; use feature qw/signatures/;
+use strict; use warnings; use v5.20; use feature qw/signatures/;
 sub main {
 }
---- v5.28
+--- v5.20
 #!/usr/bin/env perl
-use v5.28;
+use v5.XX;
 use warnings; use feature qw/signatures/;
 sub main {
 }
 --- v5.36
 #!/usr/bin/env perl
-use v5.36;
-sub main {
-}
---- v5.38
-#!/usr/bin/env perl
-use v5.38;
+use v5.XX;
 sub main {
 }
 ########## don't get medieval
@@ -222,9 +259,9 @@ use feature 'switch';
 use feature 'unicode_eval';
 use feature 'unicode_strings';
 --- v5.28
-use v5.28;
+use v5.XX;
 --- v5.36
-use v5.36;
+use v5.XX;
 use feature 'switch';
 ########## what happened to perl 7
 require v5.36;
@@ -246,136 +283,127 @@ use feature 'unicode_strings';
 no feature 'indirect';
 no feature 'multidimensional';
 --- v5.36
-use v5.36;
-########## non existent feature (would not compile)
-use v5.24;
+use v5.XX;
+--- v5.38
+use v5.XX;
 use feature 'bareword_filehandles';
---- v5.28
-use v5.28;
+########## non-existent backwards feature (would not compile)
+use v5.10;
+use feature 'bareword_filehandles';
+--- v5.10
+use v5.XX;
+--- v5.38
+use v5.XX;
+use feature 'bareword_filehandles';
 ########## no bareword::filehandles
-use v5.28;
+no bareword::filehandles;
+--- v5.10
+use v5.XX;
 no bareword::filehandles;
 --- v5.34
-use v5.34;
-no feature 'bareword_filehandles';
---- v5.36
-use v5.36;
+use v5.XX;
 no feature 'bareword_filehandles';
 --- v5.38
-use v5.38;
+use v5.XX;
 ########## no feature 'bareword_filehandles'
-use v5.34;
+use v5.10;
 no feature 'bareword_filehandles';
---- v5.34
-use v5.34;
+--- v5.10
+use v5.XX;
 no feature 'bareword_filehandles';
---- v5.36
-use v5.36;
-no feature 'bareword_filehandles';
-########## use feature 'bareword_filehandles'
-use v5.34;
-use feature 'bareword_filehandles';
---- v5.34
-use v5.34;
---- v5.36
-use v5.36;
+--- v5.38
+use v5.XX;
 ########## multiple no feature on the same line
 use v5.34;
 no feature 'indirect', 'bareword_filehandles';
+--- v5.34
+use v5.XX;
+no feature 'indirect', 'bareword_filehandles';
 --- v5.36
-use v5.36;
+use v5.XX;
 no feature 'bareword_filehandles';
 --- v5.38
-use v5.38;
+use v5.XX;
 ########## no indirect
 use strict;
 use warnings;
 no indirect;
 use Test::More;
---- v5.28
-use v5.28;
+--- v5.10
+use v5.XX;
+use strict;
+use warnings;
+no indirect;
+use Test::More;
+--- v5.12
+use v5.XX;
 use warnings;
 no indirect;
 use Test::More;
 --- v5.32
-use v5.32;
-use warnings;
-no feature 'indirect';
-use Test::More;
---- v5.34
-use v5.34;
+use v5.XX;
 use warnings;
 no feature 'indirect';
 use Test::More;
 --- v5.36
-use v5.36;
+use v5.XX;
 use Test::More;
 ########## fc
 use feature qw( say fc );
 say fc("\x{17F}");    # s
---- v5.14
-use v5.14;
+--- v5.10
+use v5.XX;
 use feature 'fc';
 say fc("\x{17F}");    # s
 --- v5.16
-use v5.16;
+use v5.XX;
 say fc("\x{17F}");    # s
 ########## stable quotes
 use strict;
 use warnings;
 no warnings "once";
---- v5.28
-use v5.28;
+--- v5.10
+use v5.XX;
+use strict;
+use warnings;
+no warnings "once";
+--- v5.12
+use v5.XX;
 use warnings;
 no warnings "once";
 --- v5.36
-use v5.36;
+use v5.XX;
 no warnings "once";
 ########## no warning before v line
 no warnings 'once';
-use v5.14;
---- v5.28
-use v5.28;
-no warnings 'once';
---- v5.36
-use v5.36;
+use v5.10;
+--- v5.10
+use v5.XX;
 no warnings 'once';
 ########## no warning before v5.36 line
 no warnings 'once';
 use v5.36;
 --- v5.36 use v5.36 re-enables all warnings
-use v5.36;
+use v5.XX;
 ########## keep possibly meaningful comments
-use v5.28; ## no critic
---- v5.28
-use v5.28;
-## no critic
---- v5.36
-use v5.36;
+use v5.10; ## no critic
+--- v5.10
+use v5.XX;
 ## no critic
 ########## no feature 'bitwise'
 use v5.28;
 no feature 'bitwise';
---- v5.36
-use v5.36;
+--- v5.28
+use v5.XX;
 no feature 'bitwise';
 ########## bitwise ops before v5.28
-use v5.14;
+use v5.10;
 my $z = $x | $y;
---- v5.22
-use v5.22;
+--- v5.10
+use v5.XX;
 my $z = $x | $y;
 --- v5.28
-use v5.28;
-
-# IMPORTANT: Please double-check the use of bitwise operators
-# before removing the `no feature 'bitwise';` line below.
-# See manual pages perlfeature (section "The 'bitwise' feature")
-# and perlop (section "Bitwise String Operators") for details.
-no feature 'bitwise';
-my $z = $x | $y;
---- v5.36
-use v5.36;
+use v5.XX;
 
 # IMPORTANT: Please double-check the use of bitwise operators
 # before removing the `no feature 'bitwise';` line below.
@@ -384,30 +412,24 @@ use v5.36;
 no feature 'bitwise';
 my $z = $x | $y;
 ########## bitwise ops + bitwise feature before v5.28
-use v5.22;
+use v5.28;
 use feature 'bitwise';
 no warnings 'experimental::bitwise';
 my $z = $x |. $y;
 --- v5.28
-use v5.28;
+use v5.XX;
 my $z = $x |. $y;
 --- v5.36
-use v5.36;
+use v5.XX;
 my $z = $x |. $y;
 ########## bitwise op= before v5.28
 use v5.22;
 my $z |= $x;
---- v5.28
-use v5.28;
-
-# IMPORTANT: Please double-check the use of bitwise operators
-# before removing the `no feature 'bitwise';` line below.
-# See manual pages perlfeature (section "The 'bitwise' feature")
-# and perlop (section "Bitwise String Operators") for details.
-no feature 'bitwise';
+--- v5.22
+use v5.XX;
 my $z |= $x;
---- v5.36
-use v5.36;
+--- v5.28
+use v5.XX;
 
 # IMPORTANT: Please double-check the use of bitwise operators
 # before removing the `no feature 'bitwise';` line below.
@@ -420,45 +442,54 @@ use v5.22;
 use feature 'bitwise';
 no warnings 'experimental::bitwise';
 my $z |.= $x;
---- v5.28
-use v5.28;
+--- v5.22
+use v5.XX;
+use feature 'bitwise';
+no warnings 'experimental::bitwise';
 my $z |.= $x;
---- v5.36
-use v5.36;
+--- v5.28
+use v5.XX;
 my $z |.= $x;
 ########## signatures + empty prototype
 sub foo () { }
---- v5.18
-use v5.18;
-sub foo () { }
---- v5.28
-use v5.28;
+--- v5.10
+use v5.XX;
 sub foo () { }
 --- v5.36
-use v5.36;
+use v5.XX;
 sub foo :prototype() { }
 ########## signatures + scalar prototype
 sub foo ($) { }
+--- v5.10
+use v5.XX;
+sub foo ($) { }
 --- v5.36
-use v5.36;
+use v5.XX;
 sub foo :prototype($) { }
 ########## experimental signatures +  prototype
 use v5.20;
 use feature 'signatures';
 sub foo ($) { } # valid signature, not a prototype
+--- v5.20
+use v5.XX;
+use feature 'signatures';
+sub foo ($) { } # valid signature, not a prototype
 --- v5.36
-use v5.36;
+use v5.XX;
 sub foo ($) { } # valid signature, not a prototype
 ########## a prototype that's not a signature
 sub money ($$) { }
+--- v5.10
+use v5.XX;
+sub money ($$) { }
 --- v5.36
-use v5.36;
+use v5.XX;
 sub money :prototype($$) { }
 ########## prototype on anonymous subs
 my $sub = sub ($@) { ... }
---- v5.28
-use v5.28;
+--- v5.10
+use v5.XX;
 my $sub = sub ($@) { ... }
 --- v5.36
-use v5.36;
+use v5.XX;
 my $sub = sub :prototype($@) { ... }
