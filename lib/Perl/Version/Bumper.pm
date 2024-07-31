@@ -346,42 +346,51 @@ sub _handle_feature_bitwise {
 
 }
 
-# The "backwards compatibility features" were created so that they
-# could be manually disabled (being considered bad practice), until they
-# were disabled by default.
-#
-# This function replaces the replacement CPAN modules by the feature
-# only if the version we bump to knows about the feature.
-sub _handle_backwards_compatibility_features {
+# handle the case of CPAN modules that serve as compatibility layer for some
+# features on older Perls, or that existed before the feature was developed
+sub _handle_compat_modules {
     my ( $doc, $bundle_num ) = @_;
-    state $backwards = {
-        bareword_filehandles => {
-            available   => 5.034,    # numeric value for easier comparisons
-            disabled    => 5.038,    # (not used at the moment)
-            replacement => 'bareword::filehandles',
-        },
-        indirect => {                # produces a compilation error
-            available   => 5.032,
-            disabled    => 5.036,
-            replacement => 'indirect',    # produces a run-time error
-        },
-        multidimensional => {
-            available   => 5.034,
-            disabled    => 5.036,
-            replacement => 'multidimensional',
-        },
-    };
-    for my $feature ( keys %$backwards ) {
-        if ( $bundle_num >= $backwards->{$feature}{available} ) {
-            my $replacement    = $backwards->{$feature}{replacement};
-            my @no_replacement = grep $_->type eq 'no',
-              _find_include( $replacement => $doc );
-            for my $no_replacement (@no_replacement) {
-                my $no_feature =
-                  PPI::Document->new( \"no feature '$feature';\n" );
-                $no_replacement->insert_after( $_->remove )
-                  for $no_feature->elements;
-                _drop_statement($no_replacement);
+    for my $feature ( grep exists $feature{$_}{compat}, keys %feature ) {
+        for my $compat ( keys %{ $feature{$feature}{compat} } ) {
+            if ( $bundle_num >= $feature{$feature}{known} ) {
+
+                # negative features (eventually disabled)
+                my @no_compat = grep $_->type eq 'no',
+                  _find_include( $compat => $doc );
+                for my $no_compat (@no_compat) {
+                    if (    # can the compat module unimport?
+                        $feature{$feature}{compat}{$compat} <= 0
+                        && (    # feature not disabled yet, or already enabled
+                            exists $feature{$feature}{disabled}
+                            ? $bundle_num < $feature{$feature}{disabled}
+                            : ( !exists $feature{$feature}{enabled}
+                                  || $bundle_num > $feature{$feature}{enabled} )
+                        )
+                      )
+                    {
+                        my $no_feature =
+                          PPI::Document->new( \"no feature '$feature';\n" );
+                        $no_compat->insert_after( $_->remove )
+                          for $no_feature->elements;
+                    }
+                    _drop_statement($no_compat);
+                }
+
+                # positive features (eventually enabled)
+                my @use_compat = grep $_->type eq 'use',
+                  _find_include( $compat => $doc );
+                for my $use_compat (@use_compat) {
+                    if ( !exists $feature{$feature}{enabled}
+                        || $bundle_num < $feature{$feature}{enabled} )
+                    {
+                        my $use_feature =
+                          PPI::Document->new( \"use feature '$feature';\n" );
+                        $use_compat->insert_after( $_->remove )
+                          for $use_feature->elements;
+                    }
+                    _drop_statement($use_compat);
+                }
+
             }
         }
     }
@@ -436,7 +445,7 @@ sub _remove_enabled_features {
     }
 
     # handle specific features
-    _handle_backwards_compatibility_features( $doc, $bundle_num );
+    _handle_compat_modules( $doc, $bundle_num );
     _handle_feature_bitwise($doc)
       if $old_num < 5.028               # code from before 'bitwise'
       && $bundle_num >= 5.028           # bumped to after 'bitwise'
