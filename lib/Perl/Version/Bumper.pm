@@ -405,7 +405,7 @@ sub _insert_version_stmt {
     $old_num //= version::->parse( 'v5.8' )->numify;
     my $version_stmt =
       PPI::Document->new( \sprintf "use %s;\n", $self->version );
-    my $insert_point = $doc->schild(0);
+    my $insert_point = $doc->schild(0) // $doc->child(0);
 
     # insert before the next significant sibling
     # if the first element is a use VERSION
@@ -420,8 +420,11 @@ sub _insert_version_stmt {
     if ( $insert_point->isa('PPI::Statement::Package') ) {
         $insert_point->insert_after( $_->remove ) for $version_stmt->elements;
     }
-    else {
+    elsif ( $insert_point->significant ) {
         $insert_point->insert_before( $_->remove ) for $version_stmt->elements;
+    }
+    else {
+        $doc->add_element( $_->remove ) for $version_stmt->elements;
     }
 
     # cleanup features enabled by the new version
