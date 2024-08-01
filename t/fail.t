@@ -2,6 +2,7 @@ use Test2::V0;
 
 use Perl::Version::Bumper;
 
+my $max_minor  = ( split /\./, Perl::Version::Bumper->feature_version )[1];
 my $this_minor = $^V->{version}[1];    # this Perl's minor version
 $this_minor-- if $this_minor % 2;      # rounded down to the latest stable
 
@@ -10,21 +11,32 @@ my @errors = (
     [ '6.0.1' => qr{\AMajor version number must be 5, not 6 } ],
     [ 'v4.2'  => qr{\AMajor version number must be 5, not 4 } ],
     [ 'v5.15' => qr{\AMinor version number must be even, not 15 } ],
-    [
-      'v5.25' => $this_minor >= 25
-        ? qr{\AMinor version number must be even, not 25 }
-        : qr{Minor version number 25 > $this_minor }
-    ],
-    [ '5.28'   => qr{\AMinor version number 280 > $this_minor } ],
-    [ 'v5.100' => qr{\AMinor version number 100 > $this_minor } ],
+    [ 'v5.25' => qr{\AMinor version number must be even, not 25 } ],
+    [ '5.28'   => qr{\AMinor version number 280 > $max_minor } ],
+    [ 'v5.100' => qr{\AMinor version number 100 > $max_minor } ],
     [ 'v5.8'   => qr{\AMinor version number 8 < 10 } ],
     [ 'not'    => qr{\AInvalid version format \(non-numeric data\)} ],
 );
 
+# check the default
+if ( $this_minor > $max_minor ) {
+    push @errors,
+      [ '' => qr{\AMinor version number $this_minor > $max_minor } ],;
+}
+else {
+    is( Perl::Version::Bumper->new->version,
+        "v5.$this_minor", "default version is v5.$this_minor" );
+}
+
 for my $e (@errors) {
     my ( $version, $error ) = @$e;
-    ok( !eval { Perl::Version::Bumper->new( version => $version ) },
-        "failed to create object with version => $version" );
+    ok(
+        !eval {
+            Perl::Version::Bumper->new(
+                $version ? ( version => $version ) : () );
+        },
+        "failed to create object with version => $version"
+    );
     like( $@, $error, ".. expected error message" );
 }
 
