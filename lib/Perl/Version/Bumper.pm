@@ -705,11 +705,23 @@ top of the file (thus encouraging "line 1 semantics").
 If the code already declares a Perl version, it can only be bumped
 to a higher version.
 
+=head1 CONSTRUCTOR
+
+=head2 new
+
+    my $prev = Perl::Version::Bumper->new( %arguments );
+    my $prev = Perl::Version::Bumper->new( \%arguments );
+
+Return a new C<Perl::Version::Bumper> object.
+
 =head1 ATTRIBUTES
 
 =head2 version
 
 The target version to bump to.
+
+Defaults to the stable version less than or equal to the version of the
+currenly running C<perl>.
 
 The constructor accepts both forms of Perl versions, regular
 (e.g. C<v5.36>) and floating-point (e.g. C<5.036>).
