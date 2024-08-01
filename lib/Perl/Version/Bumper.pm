@@ -786,4 +786,10 @@ The return value is C<undef> if the original didn't compile, false
 (empty string) if all attempts to bump the file failed, and the actual
 version number the file was bumped to in case of success.
 
+=head1 ACKNOWLEDGMENT
+
+This software was originally developed at Booking.com. With approval
+from Booking.com, this software was released as open source, for which
+the authors would like to express their gratitude.
+
 =cut
