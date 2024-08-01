@@ -6,103 +6,39 @@ use Path::Tiny;
 use PPI::Document;
 use PPI::Token::Operator;
 use PPI::Token::Attribute;
-use Carp    qw( carp croak );
-use feature ();                 # to access %feature::feature_bundle
+use Carp qw( carp croak );
 
-my $default_minor = $^V->{version}[1];    # the current perl minor version
-$default_minor -= $default_minor % 2;     # rounded down to the latest stable
-
-# everything we know about every feature:
-# - known:       when perl first learnt about the feature
-# - enabled:     when the feature was first enabled (may be before known)
-# - disabled:    when the feature was first disabled
-# - replacement: replacement modules for features to be deprecated / added
-
-# features are listed in the order of the perlfeature manual page
-# (the information that can't be computed is pre-filled)
-sub __build_feature {
-    my %feature = (
-        say => {
-            compat => {
-                'Perl6::Say'  => 1,    # import only
-                'Say::Compat' => 1,    # import only
-            }
-        },
-
-        # state
-        # switch
-        # unicode_strings
-        # unicode_eval
-        # evalbytes
-        # current_sub
-        array_base => { known => 5.016, enabled => 5.010, disabled => 5.016 },
-
-        # fc
-        lexical_subs  => { known => 5.018, enabled => 5.026 },
-        postderef     => { known => 5.020, enabled => 5.024 },
-        postderef_qq  => { known => 5.020 },
-        signatures    => { known => 5.020 },
-        refaliasing   => { known => 5.022 },
-        bitwise       => { known => 5.022 },
-        declared_refs => { known => 5.026 },
-        isa           => { known => 5.032 },
-        indirect      => {
-            known   => 5.032,
-            enabled => 5.010,
-            compat  => { indirect => 0 },    # import / unimport
-        },
-        multidimensional => {
-            known   => 5.034,
-            enabled => 5.010,
-            compat  => { multidimensional => 0 },    # import / unimport
-        },
-        bareword_filehandles => {
-            known   => 5.034,
-            enabled => 5.010,
-            compat  => { 'bareword::filehandles' => 0 },    # import / unimport
-        },
-        try                     => { known => 5.034 },
-        defer                   => { known => 5.036 },
-        extra_paired_delimiters => { known => 5.036 },
-    );
-
-    # update when each feature was enabled
-    for my $bundle ( map "5.$_", grep !( $_ % 2 ), 10 .. $default_minor ) {
-        my $bundle_num = version::->parse("v$bundle")->numify;
-
-        # when was the feature enabled
-        $feature{$_}{enabled} //= $bundle_num
-          for @{ $feature::feature_bundle{$bundle} };
-
-        # if it's enabled, surely we know about it
-        $feature{$_}{known} //= $bundle_num
-          for grep exists $feature{$_}{enabled}, keys %feature;
-
-        # detect when a feature was disabled
-        # (it must be known and have been enabled first)
-        for my $feature (
-               grep $bundle_num >= $feature{$_}{known}
-            && exists $feature{$_}{enabled}
-            && $bundle_num >= $feature{$_}{enabled},
-            keys %feature
-          )
-        {
-            $feature{$feature}{disabled} //= $bundle_num
-              unless grep $_ eq $feature,
-              @{ $feature::feature_bundle{$bundle} };
-        }
-
+# reconstruct everything we know about every feature from the DATA section
+my ( $feature_version, %feature );
+while (<DATA>) {
+    chomp;
+    if (/\A *(v5\.[0-9.]+)/) {    # header line
+        my $minor = version::->parse($1)->{version}[1];
+        $minor -= $minor % 2;
+        $feature_version = "v5.$minor";
+        next;
     }
-
-    # cleanup weird artifacts (%noops in feature.pm)
-    delete $feature{$_}{disabled} for qw( postderef lexical_subs );
-
-    return \%feature;
+    no warnings;    # substr outside of string
+    my $feature  = substr $_, 0, my $pos = 27;         # %26s
+    my $known    = substr $_, $pos, 8;                 # %-8s
+    my $enabled  = substr $_, $pos += 9, 8;            # %-8s
+    my $disabled = substr $_, $pos += 9, 8;            # %-8s
+    my @compat   = split ' ', substr $_, $pos += 9;    # %s
+    y/ //d for grep defined, $feature, $known, $enabled, $disabled;
+    $feature{$feature}{known}    = $known;
+    $feature{$feature}{enabled}  = $enabled  if $enabled;
+    $feature{$feature}{disabled} = $disabled if $disabled;
+    $feature{$feature}{compat}   = {@compat} if @compat;
 }
 
-my %feature = %{ __build_feature() };
+# CLASS METHODS
+
+sub feature_version { $feature_version }
+
+# CONSTRUCTOR
 
 sub new {
+    state $max_minor = ( split /\./, $feature_version )[1];
 
     # stolen from Moo::Object
     my $class = shift;
@@ -123,8 +59,8 @@ sub new {
     my ( $major, $minor ) = @{ $version->{version} };
     croak "Major version number must be 5, not $major"
       if $major != 5;
-    croak "Minor version number $minor > $default_minor"
-      if $minor > $default_minor;
+    croak "Minor version number $minor > $max_minor"
+      if $minor > $max_minor;
     croak "Minor version number $minor < 10"
       if $minor < 10;
     croak "Minor version number must be even, not $minor"
@@ -133,6 +69,8 @@ sub new {
 
     return bless { version => $args->{version} }, $class;
 };
+
+# ATTRIBUTES
 
 sub version { shift->{version} }
 
@@ -686,7 +624,7 @@ sub bump_file_safely {
 
 1;
 
-__END__
+=pod
 
 =head1 NAME
 
@@ -736,7 +674,7 @@ Return a new C<Perl::Version::Bumper> object.
 
 =head2 version
 
-The target version to bump to.
+The target version to bump to (in the C<v5.xx> format).
 
 Defaults to the stable version less than or equal to the version of the
 currenly running C<perl>.
@@ -766,6 +704,13 @@ is even (this module targets stable Perl versions only).
 
 The constructor will also drops any version information after the minor
 version (so C<v5.36.2> will be turned into C<v5.36>).
+
+=head1 CLASS METHODS
+
+=head2 feature_version
+
+Return the version (in the C<v5.xx> format) of the feature set recognized
+by this module. It is not possible to bump code over that version.
 
 =head1 METHODS
 
@@ -824,3 +769,30 @@ This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 
 =cut
+
+__DATA__
+           v5.36.0 feature known    enabled  disabled compat
+                       say 5.010000 5.010000          Say::Compat 1 Perl6::Say 1
+                     state 5.010000 5.010000
+                    switch 5.010000 5.010000 5.036000
+           unicode_strings 5.012000 5.012000
+                array_base 5.016    5.01     5.016
+               current_sub 5.016000 5.016000
+                 evalbytes 5.016000 5.016000
+                        fc 5.016000 5.016000
+              unicode_eval 5.016000 5.016000
+              lexical_subs 5.018    5.026
+                 postderef 5.02     5.024
+              postderef_qq 5.02     5.024000
+                signatures 5.02     5.036000
+                   bitwise 5.022    5.028000
+               refaliasing 5.022
+             declared_refs 5.026
+                  indirect 5.032    5.01     5.036000 indirect 0
+                       isa 5.032    5.036000
+      bareword_filehandles 5.034    5.01              bareword::filehandles 0
+          multidimensional 5.034    5.01     5.036000 multidimensional 0
+                       try 5.034
+                     class 5.036
+                     defer 5.036
+   extra_paired_delimiters 5.036

@@ -4,8 +4,7 @@ use Path::Tiny;
 use Perl::Version::Bumper;
 
 # the version at which to stop (next stable)
-my $stop_minor = $^V->{version}[1] + 2;
-$stop_minor -= $stop_minor % 2;
+my $stop_minor = ( split /\./, Perl::Version::Bumper->feature_version )[1] + 2;
 
 # blocks of test data are separated by ##########
 my @tests = split /^########## (.*)\n/m,
