@@ -315,35 +315,12 @@ sub _version_stmts {
     return $version_stmts ? @$version_stmts : ();
 }
 
-# The 'bitwise' feature may break bitwise operators,
-# so disable it when bitwise operators are detected
-sub _handle_feature_bitwise {
-   my ( $doc ) = @_;
-
-    # this only matters for code using bitwise ops
-    return unless $doc->find(
-        sub {
-            my ( $root, $elem ) = @_;
-            $elem->isa('PPI::Token::Operator') && $elem =~ /\A[&|~^]=?\z/;
-        }
-    );
-
-    # the `use VERSION` inserted earlier is always the last one in the doc
-    my $insert_point       = ( _version_stmts($doc) )[-1];
-    my $no_feature_bitwise = PPI::Document->new( \"no feature 'bitwise';\n" );
-    $insert_point->insert_after( $_->remove ) for $no_feature_bitwise->elements;
-
-    # also add a TODO comment to warn users
-    $insert_point = $insert_point->snext_sibling;
-    my $todo_comment = PPI::Document->new( \( << '    TODO_COMMENT' =~ s/^    //grm ) );
-
-    # IMPORTANT: Please double-check the use of bitwise operators
-    # before removing the `no feature 'bitwise';` line below.
-    # See manual pages perlfeature (section "The 'bitwise' feature")
-    # and perlop (section "Bitwise String Operators") for details.
-    TODO_COMMENT
-    $insert_point->insert_before( $_->remove ) for $todo_comment->elements;
-
+sub _features_enabled_in {
+    my $bundle_num = shift;
+    return
+      grep !exists $feature{$_}{disabled} || $bundle_num <  $feature{$_}{disabled},
+      grep  exists $feature{$_}{enabled}  && $bundle_num >= $feature{$_}{enabled},
+      keys %feature;
 }
 
 # handle the case of CPAN modules that serve as compatibility layer for some
@@ -396,29 +373,58 @@ sub _handle_compat_modules {
     }
 }
 
-# The 'signature' feature needs prototypes to be updated.
-sub _handle_feature_signatures {
-    my ($doc) = @_;
+my %feature_shine = (
 
-    # find all subs with prototypes
-    my $prototypes = $doc->find('PPI::Token::Prototype');
-    return unless $prototypes;
+    # the 'bitwise' feature may break bitwise operators,
+    # so disable it when bitwise operators are detected
+    bitwise => sub {
+        my ($doc) = @_;
 
-    # and turn them into prototype attributes
-    for my $proto (@$prototypes) {
-        $proto->insert_before( PPI::Token::Operator->new(':') );
-        $proto->insert_before( PPI::Token::Attribute->new("prototype$proto") );
-        $proto->remove;
-    }
-}
+        # this only matters for code using bitwise ops
+        return unless $doc->find(
+            sub {
+                my ( $root, $elem ) = @_;
+                $elem->isa('PPI::Token::Operator') && $elem =~ /\A[&|~^]=?\z/;
+            }
+        );
 
-sub _features_enabled_in {
-    my $bundle_num = shift;
-    return
-      grep !exists $feature{$_}{disabled} || $bundle_num <  $feature{$_}{disabled},
-      grep  exists $feature{$_}{enabled}  && $bundle_num >= $feature{$_}{enabled},
-      keys %feature;
-}
+        # the `use VERSION` inserted earlier is always the last one in the doc
+        my $insert_point = ( _version_stmts($doc) )[-1];
+        my $no_feature_bitwise =
+          PPI::Document->new( \"no feature 'bitwise';\n" );
+        $insert_point->insert_after( $_->remove )
+          for $no_feature_bitwise->elements;
+
+        # also add an IMPORTANT comment to warn users
+        $insert_point = $insert_point->snext_sibling;
+        my $todo_comment =
+          PPI::Document->new( \( << '        TODO_COMMENT' =~ s/^ {8}//grm ) );
+
+        # IMPORTANT: Please double-check the use of bitwise operators
+        # before removing the `no feature 'bitwise';` line below.
+        # See manual pages perlfeature (section "The 'bitwise' feature")
+        # and perlop (section "Bitwise String Operators") for details.
+        TODO_COMMENT
+        $insert_point->insert_before( $_->remove ) for $todo_comment->elements;
+    },
+
+    # the 'signatures' feature needs prototypes to be updated.
+    signatures => sub {
+        my ($doc) = @_;
+
+        # find all subs with prototypes
+        my $prototypes = $doc->find('PPI::Token::Prototype');
+        return unless $prototypes;
+
+        # and turn them into prototype attributes
+        for my $proto (@$prototypes) {
+            $proto->insert_before( PPI::Token::Operator->new(':') );
+            $proto->insert_before(
+                PPI::Token::Attribute->new("prototype$proto") );
+            $proto->remove;
+        }
+    },
+);
 
 # PRIVATE "METHODS"
 
@@ -448,16 +454,18 @@ sub _remove_enabled_features {
         }
     }
 
-    # handle specific features
+    # deal with compat modules
     _handle_compat_modules( $doc, $bundle_num );
-    _handle_feature_bitwise($doc)
-      if $old_num < 5.028               # code from before 'bitwise'
-      && $bundle_num >= 5.028           # bumped to after 'bitwise'
-      && !$enabled_in_code{bitwise};    # and not enabling the feature
-    _handle_feature_signatures($doc)
-      if $old_num < 5.036                  # code from before 'signatures'
-      && $bundle_num >= 5.036              # bumped to after 'signatures'
-      && !$enabled_in_code{signatures};    # and not enabling the feature
+
+    # apply some feature shine
+    for my $feature ( sort keys %feature_shine ) {
+        next unless exists $feature{$feature}{enabled};
+        my $feature_enabled = $feature{$feature}{enabled};
+        $feature_shine{$feature}->($doc)
+          if $old_num < $feature_enabled        # code from before the feature
+          && $bundle_num >= $feature_enabled    # bumped to after the feature
+          && !$enabled_in_code{$feature};       # and not enabling the feature
+    }
 
     # drop previously disabled obsolete features
     for my $no_feature ( grep $_->type eq 'no', _find_include( feature => $doc ) ) {
