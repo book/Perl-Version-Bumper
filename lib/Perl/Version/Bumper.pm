@@ -323,6 +323,13 @@ sub _features_enabled_in {
       keys %feature;
 }
 
+sub _features_known_in {
+    my $bundle_num = shift;
+    return
+      grep exists $feature{$_}{known} && $bundle_num >= $feature{$_}{known},
+      keys %feature;
+}
+
 # handle the case of CPAN modules that serve as compatibility layer for some
 # features on older Perls, or that existed before the feature was developed
 sub _handle_compat_modules {
@@ -430,10 +437,11 @@ my %feature_shine = (
 
 sub _remove_enabled_features {
     my ( $self, $doc, $old_num ) = @_;
-    my ( %enabled_in_perl, %enabled_in_code );
+    my ( %enabled_in_perl, %known_to_perl, %enabled_in_code );
     my $bundle     = $self->version =~ s/\Av//r;
     my $bundle_num = version::->parse( $self->version )->numify;
     @enabled_in_perl{ _features_enabled_in($bundle_num) } = ();
+    @known_to_perl{ _features_known_in($bundle_num) }     = ();
 
     # drop features enabled in this bundle
     # (also if they were enabled with `use experimental`)
@@ -441,7 +449,9 @@ sub _remove_enabled_features {
         for my $use_line ( grep $_->type eq 'use', _find_include( $module => $doc ) ) {
             my @old_args = _ppi_list_to_perl_list( $use_line->arguments );
             $enabled_in_code{$_}++ for @old_args;
-            my @new_args = grep !exists $enabled_in_perl{$_}, @old_args;
+            my @new_args =    # skip unknown features (would fail to compile anyway)
+              grep exists $known_to_perl{$_} && !exists $enabled_in_perl{$_},
+              @old_args;
             next if @new_args == @old_args;    # nothing to remove
             if (@new_args) {    # replace old statement with a smaller one
                 my $new_use_line = PPI::Document->new(
