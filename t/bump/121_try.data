@@ -1,0 +1,7 @@
+########## use feature 'try'
+use feature 'try';
+no warnings 'experimental::try';
+---
+use v5.XX;
+use feature 'try';
+no warnings 'experimental::try';
