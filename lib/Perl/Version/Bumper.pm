@@ -279,45 +279,52 @@ sub _feature_in_bundle {
 # features on older Perls, or that existed before the feature was developed
 sub _handle_compat_modules {
     my ( $doc, $bundle_num ) = @_;
+    my %feature_in_bundle = _feature_in_bundle($bundle_num);
     for my $feature ( grep exists $feature{$_}{compat}, keys %feature ) {
         for my $compat ( keys %{ $feature{$feature}{compat} } ) {
-            if ( $bundle_num >= $feature{$feature}{known} ) {
+            for my $include_compat ( _find_include( $compat => $doc ) ) {
 
-                # negative features (eventually disabled)
-                my @no_compat = grep $_->type eq 'no',
-                  _find_include( $compat => $doc );
-                for my $no_compat (@no_compat) {
-                    if (    # can the compat module unimport?
-                        $feature{$feature}{compat}{$compat} <= 0
-                        && (    # feature not disabled yet, or already enabled
-                            exists $feature{$feature}{disabled}
-                            ? $bundle_num < $feature{$feature}{disabled}
-                            : ( !exists $feature{$feature}{enabled}
-                                  || $bundle_num > $feature{$feature}{enabled} )
-                        )
-                      )
+                # handle `no $compat;`
+                if ( $include_compat->type eq 'no' ) {
+
+                    # if the feature is known and not disabled
+                    # and the compat module has an unimport() sub
+                    if (   exists $feature_in_bundle{known}{$feature}
+                        && !exists $feature_in_bundle{disabled}{$feature}
+                        && $feature{$feature}{compat}{$compat} <= 0 )
                     {
                         my $no_feature =
                           PPI::Document->new( \"no feature '$feature';\n" );
-                        $no_compat->insert_after( $_->remove )
+                        $include_compat->insert_after( $_->remove )
                           for $no_feature->elements;
                     }
-                    _drop_statement($no_compat);
+
+                    # some compat modules have no unimport() sub
+                    # so we drop the useless `no $compat`
+                    _drop_statement($include_compat)
+                      if exists $feature_in_bundle{known}{$feature}
+                      || $feature{$feature}{compat}{$compat} > 0;
                 }
 
-                # positive features (eventually enabled)
-                my @use_compat = grep $_->type eq 'use',
-                  _find_include( $compat => $doc );
-                for my $use_compat (@use_compat) {
-                    if ( !exists $feature{$feature}{enabled}
-                        || $bundle_num < $feature{$feature}{enabled} )
+                # handle `use $compat;`
+                if ( $include_compat->type eq 'use' ) {
+
+                    # if the feature is disabled (then it's implicitely known)
+                    # and the compat module has no unimport() sub
+                    if ( exists $feature_in_bundle{disabled}{$feature}
+                        && $feature{$feature}{compat}{$compat} >= 0 )
                     {
                         my $use_feature =
                           PPI::Document->new( \"use feature '$feature';\n" );
-                        $use_compat->insert_after( $_->remove )
+                        $include_compat->insert_after( $_->remove )
                           for $use_feature->elements;
                     }
-                    _drop_statement($use_compat);
+
+                    # some features, like 'indirect' or 'multidimensioanl',
+                    # might be enabled before being known
+                    _drop_statement($include_compat)
+                      if exists $feature_in_bundle{enabled}{$feature}
+                      || exists $feature_in_bundle{known}{$feature};
                 }
 
             }
