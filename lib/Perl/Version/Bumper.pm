@@ -787,7 +787,7 @@ under the same terms as Perl itself.
 
 __DATA__
            v5.36.0 feature known    enabled  disabled compat
-                       say 5.010000 5.010000          Say::Compat 1 Perl6::Say 1
+                       say 5.010000 5.010000          Perl6::Say 1 Say::Compat 1
                      state 5.010000 5.010000
                     switch 5.010000 5.010000 5.036000
            unicode_strings 5.012000 5.012000
