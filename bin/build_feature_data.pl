@@ -60,9 +60,8 @@ my %feature = (
     try                     => { known => 5.034 },
     defer                   => { known => 5.036 },
     extra_paired_delimiters => { known => 5.036 },
-
-    # module_true
-    class => { known => 5.036 },
+    module_true             => { known => 5.038 },
+    class                   => { known => 5.038 },
 );
 
 # update when each feature was enabled
