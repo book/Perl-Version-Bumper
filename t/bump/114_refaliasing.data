@@ -1,0 +1,6 @@
+feature refaliasing
+########## feature refaliasing
+use feature 'refaliasing';
+---
+use v5.XX;
+use feature 'refaliasing';
