@@ -790,7 +790,7 @@ under the same terms as Perl itself.
 =cut
 
 __DATA__
-           v5.36.0 feature known    enabled  disabled compat
+           v5.38.2 feature known    enabled  disabled compat
                        say 5.010000 5.010000          Perl6::Say 1 Say::Compat 1
                      state 5.010000 5.010000
                     switch 5.010000 5.010000 5.036000
@@ -809,9 +809,10 @@ __DATA__
              declared_refs 5.026
                   indirect 5.032    5.01     5.036000 indirect 0
                        isa 5.032    5.036000
-      bareword_filehandles 5.034    5.01              bareword::filehandles 0
+      bareword_filehandles 5.034    5.01     5.038000 bareword::filehandles 0
           multidimensional 5.034    5.01     5.036000 multidimensional 0
                        try 5.034
-                     class 5.036
                      defer 5.036
    extra_paired_delimiters 5.036
+                     class 5.038
+               module_true 5.038    5.038000
