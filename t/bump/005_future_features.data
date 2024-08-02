@@ -1,0 +1,35 @@
+features that may not be known by the given perl version
+########## non-existent backwards feature (would not compile)
+use feature 'bareword_filehandles';
+---
+use v5.XX;
+--- v5.38
+use v5.XX;
+use feature 'bareword_filehandles';
+########## no bareword::filehandles
+no bareword::filehandles;
+---
+use v5.XX;
+no bareword::filehandles;
+--- v5.34
+use v5.XX;
+no feature 'bareword_filehandles';
+--- v5.38
+use v5.XX;
+########## no feature 'bareword_filehandles'
+no feature 'bareword_filehandles';
+---
+use v5.XX;
+no feature 'bareword_filehandles';
+--- v5.38
+use v5.XX;
+########## multiple no feature on the same line
+no feature qw( indirect bareword_filehandles );
+---
+use v5.XX;
+no feature qw( indirect bareword_filehandles );
+--- v5.36
+use v5.XX;
+no feature 'bareword_filehandles';
+--- v5.38
+use v5.XX;

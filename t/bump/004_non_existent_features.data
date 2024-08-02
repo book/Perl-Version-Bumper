@@ -1,0 +1,51 @@
+features that may not be known by the given perl version
+########## non-existent backwards feature (would not compile)
+use feature 'bareword_filehandles';
+---
+use v5.XX;
+--- v5.38
+use v5.XX;
+use feature 'bareword_filehandles';
+########## no bareword::filehandles
+no bareword::filehandles;
+---
+use v5.XX;
+no bareword::filehandles;
+--- v5.34
+use v5.XX;
+no feature 'bareword_filehandles';
+--- v5.38
+use v5.XX;
+########## no feature 'bareword_filehandles'
+no feature 'bareword_filehandles';
+---
+use v5.XX;
+no feature 'bareword_filehandles';
+--- v5.38
+use v5.XX;
+########## use non-existent feature
+use feature 'foobar';
+---
+use v5.XX;
+########## use a mix of non-existent and existing features
+use feature qw( foobar signatures );
+---
+use v5.XX;
+use feature 'signatures';
+--- v5.36
+use v5.XX;
+########## no non-existent feature
+no feature 'foobaz';
+no feature 'bareword_filehandles';
+---
+use v5.XX;
+no feature 'bareword_filehandles';
+--- v5.38
+use v5.XX;
+########## no non-existent feature (qw)
+no feature qw( foobaz bareword_filehandles );
+---
+use v5.XX;
+no feature 'bareword_filehandles';
+--- v5.38
+use v5.XX;
