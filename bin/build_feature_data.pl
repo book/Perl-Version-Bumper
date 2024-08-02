@@ -103,7 +103,12 @@ my $feature_data = join '',
   [ "$^V feature", qw( known enabled disabled compat ) ],
   map [ map $_ // '',
     $_,       $feature{$_}->@{qw( known enabled disabled)},
-    join ' ', %{ $feature{$_}{compat} // {} } ],
+    do {
+        my $feature = $_;
+        join ' ', map +( $_ => $feature{$feature}{compat}{$_} ),
+          sort keys %{ $feature{$_}{compat} // {} };
+    }
+  ],
   sort { $feature{$a}->{known} <=> $feature{$b}->{known} || $a cmp $b }
   keys %feature;
 
