@@ -1,4 +1,3 @@
-feature declared_refs
 ########## feature declared
 use feature 'declared_refs';
 ---

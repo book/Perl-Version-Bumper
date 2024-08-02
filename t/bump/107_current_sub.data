@@ -1,4 +1,3 @@
-feature current_sub
 ########## feature current_sub
 use feature 'current_sub';
 ---

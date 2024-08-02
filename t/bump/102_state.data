@@ -1,4 +1,3 @@
-feature state
 ########## feature state
 use feature 'state';
 ---

@@ -1,4 +1,3 @@
-feature bitwise
 ########## feature bitwise
 use feature 'bitwise';
 ---

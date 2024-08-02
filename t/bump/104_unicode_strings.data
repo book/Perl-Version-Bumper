@@ -1,4 +1,3 @@
-feature unicode_strings
 ########## feature unicode_strings
 use feature 'unicode_strings';
 ---

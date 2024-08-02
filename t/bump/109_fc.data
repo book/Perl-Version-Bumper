@@ -1,4 +1,3 @@
-feature fc
 ########## feature fc
 use feature qw( say fc );
 say fc("\x{17F}");    # s

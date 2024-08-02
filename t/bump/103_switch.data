@@ -1,4 +1,3 @@
-feature switch
 ########## feature switch
 use feature 'switch';
 ---

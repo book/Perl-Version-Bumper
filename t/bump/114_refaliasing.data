@@ -1,4 +1,3 @@
-feature refaliasing
 ########## feature refaliasing
 use feature 'refaliasing';
 ---
