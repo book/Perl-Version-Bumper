@@ -253,19 +253,26 @@ sub _version_stmts {
     return $version_stmts ? @$version_stmts : ();
 }
 
-sub _features_enabled_in {
+sub _feature_in_bundle {
     my $bundle_num = shift;
-    return
-      grep !exists $feature{$_}{disabled} || $bundle_num <  $feature{$_}{disabled},
-      grep  exists $feature{$_}{enabled}  && $bundle_num >= $feature{$_}{enabled},
-      keys %feature;
-}
-
-sub _features_known_in {
-    my $bundle_num = shift;
-    return
-      grep exists $feature{$_}{known} && $bundle_num >= $feature{$_}{known},
-      keys %feature;
+    return (
+        known => {
+            map +( $_ => $feature{$_}{known} ),
+            grep exists $feature{$_}{known} && $bundle_num >= $feature{$_}{known},
+            keys %feature
+        },
+        enabled => {
+            map +( $_ => $feature{$_}{enabled} ),
+            grep !exists $feature{$_}{disabled} || $bundle_num < $feature{$_}{disabled},
+            grep  exists $feature{$_}{enabled}  && $bundle_num >= $feature{$_}{enabled},
+            keys %feature
+        },
+        disabled => {
+            map +( $_ => $feature{$_}{disabled} ),
+            grep exists $feature{$_}{disabled} && $bundle_num >= $feature{$_}{disabled},
+            keys %feature
+        },
+    );
 }
 
 # handle the case of CPAN modules that serve as compatibility layer for some
@@ -375,11 +382,10 @@ my %feature_shine = (
 
 sub _remove_enabled_features {
     my ( $self, $doc, $old_num ) = @_;
-    my ( %enabled_in_perl, %known_to_perl, %enabled_in_code );
-    my $bundle     = $self->version =~ s/\Av//r;
-    my $bundle_num = version::->parse( $self->version )->numify;
-    @enabled_in_perl{ _features_enabled_in($bundle_num) } = ();
-    @known_to_perl{ _features_known_in($bundle_num) }     = ();
+    my $bundle           = $self->version =~ s/\Av//r;
+    my $bundle_num       = version::->parse( $self->version )->numify;
+    my %feature_in_bundle = _feature_in_bundle($bundle_num);
+    my %enabled_in_code;
 
     # drop features enabled in this bundle
     # (also if they were enabled with `use experimental`)
@@ -387,8 +393,8 @@ sub _remove_enabled_features {
         for my $use_line ( grep $_->type eq 'use', _find_include( $module => $doc ) ) {
             my @old_args = _ppi_list_to_perl_list( $use_line->arguments );
             $enabled_in_code{$_}++ for @old_args;
-            my @new_args =    # skip unknown features (would fail to compile anyway)
-              grep exists $known_to_perl{$_} && !exists $enabled_in_perl{$_},
+            my @new_args =    # skip non-existent features
+              grep exists $feature{$_} && !exists $feature_in_bundle{enabled}{$_},
               @old_args;
             next if @new_args == @old_args;    # nothing to remove
             if (@new_args) {    # replace old statement with a smaller one
@@ -415,10 +421,12 @@ sub _remove_enabled_features {
           && !$enabled_in_code{$feature};       # and not enabling the feature
     }
 
-    # drop previously disabled obsolete features
+    # drop disabled features that are not part of the bundle
     for my $no_feature ( grep $_->type eq 'no', _find_include( feature => $doc ) ) {
         my @old_args = _ppi_list_to_perl_list( $no_feature->arguments );
-        my @new_args = grep exists $enabled_in_perl{$_}, @old_args;
+        my @new_args =    # skip non-existent features
+          grep exists $feature{$_} && !exists $feature_in_bundle{disabled}{$_},
+          @old_args;
         next if @new_args == @old_args;    # nothing to remove
         if (@new_args) {    # replace old statement with a smaller one
             my $new_no_feature = PPI::Document->new(
@@ -434,7 +442,7 @@ sub _remove_enabled_features {
     for my $warn_line ( grep $_->type eq 'no', _find_include( warnings => $doc ) ) {
         my @old_args = _ppi_list_to_perl_list( $warn_line->arguments );
         next unless grep /\Aexperimental::/, @old_args;
-        my @new_args = grep !exists $enabled_in_perl{s/\Aexperimental:://r},
+        my @new_args = grep !exists $feature_in_bundle{enabled}{s/\Aexperimental:://r},
           grep /\Aexperimental::/, @old_args;
         my @keep_args = grep !/\Aexperimental::/, @old_args;
         next if @new_args == @old_args    # nothing to remove
