@@ -1,0 +1,32 @@
+feature indirect
+########## feature indirect
+use feature 'indirect';
+---
+use v5.XX;
+--- v5.36
+use v5.XX;
+use feature 'indirect';
+########## no indirect
+use strict;
+use warnings;
+no indirect;
+use Test::More;
+---
+use v5.XX;
+use strict;
+use warnings;
+no indirect;
+use Test::More;
+--- v5.12
+use v5.XX;
+use warnings;
+no indirect;
+use Test::More;
+--- v5.32
+use v5.XX;
+use warnings;
+no feature 'indirect';
+use Test::More;
+--- v5.36
+use v5.XX;
+use Test::More;
