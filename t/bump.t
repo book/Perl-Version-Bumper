@@ -13,11 +13,11 @@ sub test_file {
     my @tests = split /^########## (.*)\n/m, path($file)->slurp;
     return diag("$file is empty") unless @tests;
 
-    chomp( my $title = shift @tests );    # drop the test preamble
+    chomp( my $preamble = shift @tests );    # drop the test preamble
 
     my $todo;          # not a TODO by default
     my $minor = 10;    # always start at v5.10
-    subtest $title => sub {
+    subtest $file => sub {
 
         while ( my ( $name, $data ) = splice @tests, 0, 2 ) {
 

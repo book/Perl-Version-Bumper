@@ -1,4 +1,7 @@
 translate features into bundles
+
+inspired from:
+https://blogs.perl.org/users/psc/2022/05/what-happened-to-perl-7.html
 ########## :5.10
 require v5.10;
 use feature 'say';

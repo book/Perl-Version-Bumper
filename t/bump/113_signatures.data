@@ -1,4 +1,3 @@
-feature signatures
 ########## feature signature
 use feature 'signatures';
 ---

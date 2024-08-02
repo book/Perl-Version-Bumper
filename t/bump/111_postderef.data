@@ -1,4 +1,3 @@
-feature postderef
 ########## feature postderef
 use feature 'postderef';
 ---

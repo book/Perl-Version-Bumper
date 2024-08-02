@@ -1,4 +1,4 @@
-features that may not be known by the given perl version
+features that do not exist in any perl version
 ########## use non-existent feature
 use feature 'foobar';
 ---

@@ -1,4 +1,3 @@
-feature say
 ########## feature say
 use feature 'say';
 say "Hello, world!";

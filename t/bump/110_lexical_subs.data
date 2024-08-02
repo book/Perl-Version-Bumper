@@ -1,4 +1,3 @@
-feature lexical_subs
 ########## feature lexical_subs
 use feature qw( say lexical_subs );
 ---

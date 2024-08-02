@@ -1,4 +1,3 @@
-feature postderef_qq
 ########## feature postderef_qq
 use feature 'postderef_qq';
 ---

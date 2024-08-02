@@ -1,4 +1,3 @@
-feature isa
 ########## feature isa
 use feature 'isa';
 ---

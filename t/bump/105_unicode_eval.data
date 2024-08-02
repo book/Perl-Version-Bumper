@@ -1,4 +1,3 @@
-feature unicode_eval
 ########## feature unicode_eval
 use feature 'unicode_eval';
 ---

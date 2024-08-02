@@ -1,4 +1,3 @@
-feature array_base
 ########## feature array_base
 use feature 'array_base';
 ---
