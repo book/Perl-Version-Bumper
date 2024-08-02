@@ -363,6 +363,10 @@ use feature qw( say fc );
 say fc("\x{17F}");    # s
 ---
 use v5.XX;
+use feature 'fc';
+say fc("\x{17F}");    # s
+--- v5.16
+use v5.XX;
 say fc("\x{17F}");    # s
 ########## stable quotes
 use strict;
