@@ -1,0 +1,6 @@
+feature declared_refs
+########## feature declared
+use feature 'declared_refs';
+---
+use v5.XX;
+use feature 'declared_refs';
