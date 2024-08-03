@@ -37,6 +37,28 @@ sub feature_version { $feature_version }
 
 # CONSTRUCTOR
 
+sub _feature_in_bundle {
+    my $version_num = shift;
+    return {
+        known => {
+            map +( $_ => $feature{$_}{known} ),
+            grep exists $feature{$_}{known} && $version_num >= $feature{$_}{known},
+            keys %feature
+        },
+        enabled => {
+            map +( $_ => $feature{$_}{enabled} ),
+            grep !exists $feature{$_}{disabled} || $version_num < $feature{$_}{disabled},
+            grep  exists $feature{$_}{enabled}  && $version_num >= $feature{$_}{enabled},
+            keys %feature
+        },
+        disabled => {
+            map +( $_ => $feature{$_}{disabled} ),
+            grep exists $feature{$_}{disabled} && $version_num >= $feature{$_}{disabled},
+            keys %feature
+        },
+    };
+}
+
 sub new {
     state $max_minor = ( split /\./, $feature_version )[1];
 
@@ -67,12 +89,19 @@ sub new {
       if $minor % 2;
     $args->{version} = "v$major.$minor";
 
-    return bless { version => $args->{version} }, $class;
+    my $version_num = version::->parse( $args->{version} )->numify;
+    return bless {
+        version           => $args->{version},
+        version_num       => $version_num,
+        feature_in_bundle => _feature_in_bundle( $version_num ),
+    }, $class;
 };
 
 # ATTRIBUTES
 
 sub version { shift->{version} }
+
+sub version_num { shift->{version_num} }
 
 # PRIVATE FUNCTIONS
 
@@ -253,85 +282,6 @@ sub _version_stmts {
     return $version_stmts ? @$version_stmts : ();
 }
 
-sub _feature_in_bundle {
-    my $bundle_num = shift;
-    return (
-        known => {
-            map +( $_ => $feature{$_}{known} ),
-            grep exists $feature{$_}{known} && $bundle_num >= $feature{$_}{known},
-            keys %feature
-        },
-        enabled => {
-            map +( $_ => $feature{$_}{enabled} ),
-            grep !exists $feature{$_}{disabled} || $bundle_num < $feature{$_}{disabled},
-            grep  exists $feature{$_}{enabled}  && $bundle_num >= $feature{$_}{enabled},
-            keys %feature
-        },
-        disabled => {
-            map +( $_ => $feature{$_}{disabled} ),
-            grep exists $feature{$_}{disabled} && $bundle_num >= $feature{$_}{disabled},
-            keys %feature
-        },
-    );
-}
-
-# handle the case of CPAN modules that serve as compatibility layer for some
-# features on older Perls, or that existed before the feature was developed
-sub _handle_compat_modules {
-    my ( $doc, $bundle_num ) = @_;
-    my %feature_in_bundle = _feature_in_bundle($bundle_num);
-    for my $feature ( grep exists $feature{$_}{compat}, keys %feature ) {
-        for my $compat ( keys %{ $feature{$feature}{compat} } ) {
-            for my $include_compat ( _find_include( $compat => $doc ) ) {
-
-                # handle `no $compat;`
-                if ( $include_compat->type eq 'no' ) {
-
-                    # if the feature is known and not disabled
-                    # and the compat module has an unimport() sub
-                    if (   exists $feature_in_bundle{known}{$feature}
-                        && !exists $feature_in_bundle{disabled}{$feature}
-                        && $feature{$feature}{compat}{$compat} <= 0 )
-                    {
-                        my $no_feature =
-                          PPI::Document->new( \"no feature '$feature';\n" );
-                        $include_compat->insert_after( $_->remove )
-                          for $no_feature->elements;
-                    }
-
-                    # some compat modules have no unimport() sub
-                    # so we drop the useless `no $compat`
-                    _drop_statement($include_compat)
-                      if exists $feature_in_bundle{known}{$feature}
-                      || $feature{$feature}{compat}{$compat} > 0;
-                }
-
-                # handle `use $compat;`
-                if ( $include_compat->type eq 'use' ) {
-
-                    # if the feature is disabled (then it's implicitely known)
-                    # and the compat module has no unimport() sub
-                    if ( exists $feature_in_bundle{disabled}{$feature}
-                        && $feature{$feature}{compat}{$compat} >= 0 )
-                    {
-                        my $use_feature =
-                          PPI::Document->new( \"use feature '$feature';\n" );
-                        $include_compat->insert_after( $_->remove )
-                          for $use_feature->elements;
-                    }
-
-                    # some features, like 'indirect' or 'multidimensioanl',
-                    # might be enabled before being known
-                    _drop_statement($include_compat)
-                      if exists $feature_in_bundle{enabled}{$feature}
-                      || exists $feature_in_bundle{known}{$feature};
-                }
-
-            }
-        }
-    }
-}
-
 my %feature_shine = (
 
     # the 'bitwise' feature may break bitwise operators,
@@ -387,11 +337,61 @@ my %feature_shine = (
 
 # PRIVATE "METHODS"
 
+# handle the case of CPAN modules that serve as compatibility layer for some
+# features on older Perls, or that existed before the feature was developed
+sub _handle_compat_modules {
+    my ( $self, $doc ) = @_;
+    my $feature_in_bundle = $self->{feature_in_bundle};
+    for my $feature ( grep exists $feature{$_}{compat}, keys %feature ) {
+        for my $compat ( keys %{ $feature{$feature}{compat} } ) {
+            for my $include_compat ( _find_include( $compat => $doc ) ) {
+
+                # handle `no $compat;`
+                if ( $include_compat->type eq 'no' ) {
+
+                    # if the feature is known and not disabled
+                    # and the compat module has an unimport() sub
+                    if (   exists $feature_in_bundle->{known}{$feature}
+                        && !exists $feature_in_bundle->{disabled}{$feature}
+                        && $feature{$feature}{compat}{$compat} <= 0 )
+                    {
+                        my $no_feature = # feature enabled, and not disabled yet
+                          PPI::Document->new( \"no feature '$feature';\n" );
+                        $include_compat->insert_after( $_->remove )
+                          for $no_feature->elements;
+                    }
+
+                    # some compat modules have no unimport() sub
+                    # so we drop the useless `no $compat`
+                    _drop_statement($include_compat)
+                      if exists $feature_in_bundle->{known}{$feature}
+                      || $feature{$feature}{compat}{$compat} > 0;
+                }
+
+                # handle `use $compat;`
+                if ( $include_compat->type eq 'use' ) {
+                    if ( exists $feature_in_bundle->{disabled}{$feature} ) {
+                        my $use_feature =
+                          PPI::Document->new( \"use feature '$feature';\n" );
+                        $include_compat->insert_after( $_->remove )
+                          for $use_feature->elements;
+                    }
+
+                    # some features, like 'indirect' or 'multidimensioanl',
+                    # might be enabled before known
+                    _drop_statement($include_compat)
+                      if exists $feature_in_bundle->{enabled}{$feature}
+                      || exists $feature_in_bundle->{known}{$feature};
+                }
+            }
+        }
+    }
+}
+
 sub _remove_enabled_features {
     my ( $self, $doc, $old_num ) = @_;
-    my $bundle           = $self->version =~ s/\Av//r;
-    my $bundle_num       = version::->parse( $self->version )->numify;
-    my %feature_in_bundle = _feature_in_bundle($bundle_num);
+    my $version_num       = $self->version_num;
+    my $feature_in_bundle = $self->{feature_in_bundle};
     my %enabled_in_code;
 
     # drop features enabled in this bundle
@@ -401,7 +401,7 @@ sub _remove_enabled_features {
             my @old_args = _ppi_list_to_perl_list( $use_line->arguments );
             $enabled_in_code{$_}++ for @old_args;
             my @new_args =    # skip non-existent features
-              grep exists $feature{$_} && !exists $feature_in_bundle{enabled}{$_},
+              grep exists $feature{$_} && !exists $feature_in_bundle->{enabled}{$_},
               @old_args;
             next if @new_args == @old_args;    # nothing to remove
             if (@new_args) {    # replace old statement with a smaller one
@@ -416,7 +416,7 @@ sub _remove_enabled_features {
     }
 
     # deal with compat modules
-    _handle_compat_modules( $doc, $bundle_num );
+    $self->_handle_compat_modules($doc);
 
     # apply some feature shine
     for my $feature ( sort keys %feature_shine ) {
@@ -424,7 +424,7 @@ sub _remove_enabled_features {
         my $feature_enabled = $feature{$feature}{enabled};
         $feature_shine{$feature}->($doc)
           if $old_num < $feature_enabled        # code from before the feature
-          && $bundle_num >= $feature_enabled    # bumped to after the feature
+          && $version_num >= $feature_enabled    # bumped to after the feature
           && !$enabled_in_code{$feature};       # and not enabling the feature
     }
 
@@ -432,7 +432,7 @@ sub _remove_enabled_features {
     for my $no_feature ( grep $_->type eq 'no', _find_include( feature => $doc ) ) {
         my @old_args = _ppi_list_to_perl_list( $no_feature->arguments );
         my @new_args =    # skip non-existent features
-          grep exists $feature{$_} && !exists $feature_in_bundle{disabled}{$_},
+          grep exists $feature{$_} && !exists $feature_in_bundle->{disabled}{$_},
           @old_args;
         next if @new_args == @old_args;    # nothing to remove
         if (@new_args) {    # replace old statement with a smaller one
@@ -449,7 +449,7 @@ sub _remove_enabled_features {
     for my $warn_line ( grep $_->type eq 'no', _find_include( warnings => $doc ) ) {
         my @old_args = _ppi_list_to_perl_list( $warn_line->arguments );
         next unless grep /\Aexperimental::/, @old_args;
-        my @new_args = grep !exists $feature_in_bundle{enabled}{s/\Aexperimental:://r},
+        my @new_args = grep !exists $feature_in_bundle->{enabled}{s/\Aexperimental:://r},
           grep /\Aexperimental::/, @old_args;
         my @keep_args = grep !/\Aexperimental::/, @old_args;
         next if @new_args == @old_args    # nothing to remove
@@ -466,10 +466,10 @@ sub _remove_enabled_features {
     }
 
     # strict is automatically enabled with 5.12
-    _drop_bare( use => strict => $doc ) if $bundle_num >= 5.012;
+    _drop_bare( use => strict => $doc ) if $version_num >= 5.012;
 
     # warnings are automatically enabled with 5.36
-    _drop_bare( use => warnings => $doc ) if $bundle_num >= 5.036;
+    _drop_bare( use => warnings => $doc ) if $version_num >= 5.036;
 
     return;
 }
@@ -728,6 +728,10 @@ Return the version (in the C<v5.xx> format) of the feature set recognized
 by this module. It is not possible to bump code over that version.
 
 =head1 METHODS
+
+=head2 version_num
+
+Return the L</version> value as a floating-point number.
 
 =head2 bump_ppi
 
