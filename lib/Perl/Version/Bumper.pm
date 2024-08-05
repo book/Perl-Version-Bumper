@@ -400,8 +400,9 @@ sub _remove_enabled_features {
         for my $use_line ( grep $_->type eq 'use', _find_include( $module => $doc ) ) {
             my @old_args = _ppi_list_to_perl_list( $use_line->arguments );
             $enabled_in_code{$_}++ for @old_args;
-            my @new_args =    # skip non-existent features
-              grep exists $feature{$_} && !exists $feature_in_bundle->{enabled}{$_},
+            my @new_args =                # only enable features that
+              grep exists $feature{$_}    # actuall exist
+              && !exists $feature_in_bundle->{enabled}{$_},    # are not enabled
               @old_args;
             next if @new_args == @old_args;    # nothing to remove
             if (@new_args) {    # replace old statement with a smaller one
@@ -423,16 +424,19 @@ sub _remove_enabled_features {
         next unless exists $feature{$feature}{enabled};
         my $feature_enabled = $feature{$feature}{enabled};
         $feature_shine{$feature}->($doc)
-          if $old_num < $feature_enabled        # code from before the feature
+          if $old_num < $feature_enabled         # code from before the feature
           && $version_num >= $feature_enabled    # bumped to after the feature
-          && !$enabled_in_code{$feature};       # and not enabling the feature
+          && !$enabled_in_code{$feature};        # and not enabling the feature
     }
 
     # drop disabled features that are not part of the bundle
     for my $no_feature ( grep $_->type eq 'no', _find_include( feature => $doc ) ) {
         my @old_args = _ppi_list_to_perl_list( $no_feature->arguments );
-        my @new_args =    # skip non-existent features
-          grep exists $feature{$_} && !exists $feature_in_bundle->{disabled}{$_},
+        my @new_args =                # only disable features that
+          grep exists $feature{$_}    # actually exist
+          && exists $feature_in_bundle->{known}{$_}    # are not known yet
+          && !exists $feature_in_bundle->{enabled}{$_}    # are not known yet
+          && !exists $feature_in_bundle->{disabled}{$_},  # are not disabled yet
           @old_args;
         next if @new_args == @old_args;    # nothing to remove
         if (@new_args) {    # replace old statement with a smaller one
