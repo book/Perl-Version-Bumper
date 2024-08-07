@@ -789,6 +789,31 @@ under the same terms as Perl itself.
 
 =cut
 
+# The following data is used to generate the %feature hash.
+#
+# The keys are:
+# - known:    when perl first learnt about the feature
+# - enabled:  when the feature was first enabled (may be before it was known)
+# - disabled: when the feature was first disabled
+# - compat:   replacement modules for features to be deprecated / added
+#
+# Different features have different lifecycles:
+#
+# * New features (i.e. additional behaviour that didn't exist in Perl v5.8):
+#   - are 'known' in the Perl release that introduced them
+#   - are 'enabled' either in the same version (e.g. 'say', 'state') or
+#     after an "experimental" phase (e.g. 'signatures', 'bitwise')
+#   - once enabled, they are not meant to be 'disabled'
+#
+# * Backwards compatibility features (features that existed in older
+#   Perls,  but were later deemed undesirable, and scheduled for being
+#   eventuall disabled or removed):
+#   - are 'enabled' (they were part of the default Perl 5 behaviour
+#     before they are even 'known' (actually got a feature in Perl).
+#   - are meant to be manually disabled (with `no feature`, until a
+#     later feature bundle  eventually disables them by default.
+#
+
 __DATA__
            v5.38.2 feature known    enabled  disabled compat
                        say 5.010000 5.010000          Perl6::Say 1 Say::Compat 1
