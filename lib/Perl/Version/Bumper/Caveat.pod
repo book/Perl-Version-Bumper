@@ -1,0 +1,112 @@
+# Preamble
+
+Pay attention to the case of words!  In this document:
+* `perl` (lowercase, monospace) is the _binary_, i.e. the actual program that
+  compile and runs your Perl code
+* Perl (initial capital) is the _language_, i.e. the baseline of features
+  a `use VERSION` line declares
+
+The version of the binary and the version of the language mean slightly
+different things.
+
+# Perl's own knowledge of its features
+
+New Perl language features are introduced over time, and newer `perl`s
+learn about them as they are introduced.
+
+For example, this code:
+
+```
+use v5.10;
+use feature 'lexical_subs';
+```
+
+* will die on any `perl` that doesn't know about the `lexical_subs` feature
+  (i.e. all of them up until version v5.18)
+* will compile (and run) fine on any `perl` that knows about it
+
+The "Perl language" that the rest of the file works with:
+* knows about `say`, `state`, `switch` (the switch keywords will throw a
+  warning in the `deprecated` category when used on any `perl` after
+  v5.18)
+* knows about lexical subroutines
+
+This is a 
+
+When a new feature is introduced in Perl, it usually is marked as
+"experimental" (meaning, warnings will be emitted when loading the
+feature, unless the corresponding `experimental::` warning is explicitely
+disabled).  (Note: the `experimental` module combines loading the feature
+and disabling the warning in one single line of code.)
+
+Once the feature is deemed stable, it autotically enabled by all the
+feature bundles that come after that. The experimental warning is also
+disabled.
+
+Some features do not go through an experimental phase. For example:
+`say`, `state`, `module_true` where all enabled in the same bundle as
+the version that introduced them.
+
+# Bumping Perl versions
+
+Running this code:
+
+```
+use v5.10;    # just need 'say'
+use Perl::Version::Bumper;
+say Perl::Version::Bumper->new->bump( << 'CODE' );
+use v5.10;
+use feature 'signatures';
+CODE
+```
+
+will produce different results depending on the version of
+`perl` running it.
+
+With `perl5.16.3`, we get:
+```
+use v5.16;
+```
+because `perl5.16` doesn't even know about the `signatures`
+feature (which was introduced in Perl v5.20).
+
+With `perl5.22.4`, we get:
+```
+use v5.22;
+use feature 'signatures';
+```
+because `perl5.22.4` knows about the `signatures` feature
+(which was actually introduced in Perl v5.20), and also that
+it's still experimental in the `:5.22` feature bundle.
+
+With `perl5.40.0`, we get:
+```
+use v5.40;
+```
+because the `:5.36` feature bundle enabled the `signatures` feature
+by default.
+
+
+-----
+
+
+
+This code:
+
+    use feature 'signatures';
+
+will die with any perl before perl5.20.0, because the binary does not
+know about the feature itself.  However, that should not prevent a
+perl5.20.0 to bump it to any version of the language.
+
+The above code will work on any perl that knows about the feature, and
+only enable signatures, but not `say`, or any other post-v5.10 feature.
+
+When writing code like this:
+
+    use v5.10;
+    use feature 'signatures';
+
+one is opting into a version of the Perl language that is not described
+by any specific feature bundle. However, any perl that knows about the
+`signatures` feature will know how to run it.
