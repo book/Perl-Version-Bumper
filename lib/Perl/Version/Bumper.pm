@@ -388,7 +388,7 @@ sub _handle_compat_modules {
     }
 }
 
-sub _remove_enabled_features {
+sub _cleanup_bundled_features {
     my ( $self, $doc, $old_num ) = @_;
     my $version_num       = $self->version_num;
     my $feature_in_bundle = $self->{feature_in_bundle};
@@ -400,10 +400,11 @@ sub _remove_enabled_features {
         for my $use_line ( _find_include( $module => $doc, 'use' ) ) {
             my @old_args = _ppi_list_to_perl_list( $use_line->arguments );
             $enabled_in_code{$_}++ for @old_args;
-            my @new_args =    # skip non-existent features
-              grep exists $feature{$_} && !exists $feature_in_bundle->{enabled}{$_},
+            my @new_args =                # keep enabling features
+              grep exists $feature{$_}    # that actually exist and are
+              && !exists $feature_in_bundle->{enabled}{$_},    # not enabled yet
               @old_args;
-            next if @new_args == @old_args;    # nothing to remove
+            next if @new_args == @old_args;    # nothing to change
             if (@new_args) {    # replace old statement with a smaller one
                 my $new_use_line = PPI::Document->new(
                     \"use $module @{[ join ', ', map qq{'$_'}, @new_args]};" );
@@ -430,10 +431,11 @@ sub _remove_enabled_features {
     # drop disabled features that are not part of the bundle
     for my $no_feature ( _find_include( feature => $doc, 'no' ) ) {
         my @old_args = _ppi_list_to_perl_list( $no_feature->arguments );
-        my @new_args =    # skip non-existent features
-          grep exists $feature{$_} && !exists $feature_in_bundle->{disabled}{$_},
+        my @new_args =                # keep disabling features
+          grep exists $feature{$_}    # that actually exist and are
+          && !exists $feature_in_bundle->{disabled}{$_},    # not disabled yet
           @old_args;
-        next if @new_args == @old_args;    # nothing to remove
+        next if @new_args == @old_args;                     # nothing to change
         if (@new_args) {    # replace old statement with a smaller one
             my $new_no_feature = PPI::Document->new(
                 \"no feature @{[ join ', ', map qq{'$_'}, @new_args]};" );
@@ -500,8 +502,8 @@ sub _insert_version_stmt {
         $doc->add_element( $_->remove ) for $version_stmt->elements;
     }
 
-    # cleanup features enabled by the new version
-    _remove_enabled_features( $self, $doc, $old_num );
+    # cleanup features enabled or disabled by the new version
+    _cleanup_bundled_features( $self, $doc, $old_num );
 }
 
 sub _try_compile {
