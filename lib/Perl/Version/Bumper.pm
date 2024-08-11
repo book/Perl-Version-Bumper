@@ -418,14 +418,13 @@ sub _remove_enabled_features {
     # deal with compat modules
     $self->_handle_compat_modules($doc);
 
-    # apply some feature shine
-    for my $feature ( sort keys %feature_shine ) {
-        next unless exists $feature{$feature}{enabled};
+    # apply some feature shine when crossing the feature enablement boundary
+    for my $feature ( sort grep exists $feature{$_}{enabled}, keys %feature_shine ) {
         my $feature_enabled = $feature{$feature}{enabled};
         $feature_shine{$feature}->($doc)
-          if $old_num < $feature_enabled        # code from before the feature
+          if $old_num < $feature_enabled         # code from before the feature
           && $version_num >= $feature_enabled    # bumped to after the feature
-          && !$enabled_in_code{$feature};       # and not enabling the feature
+          && !$enabled_in_code{$feature};        # and not enabling the feature
     }
 
     # drop disabled features that are not part of the bundle
