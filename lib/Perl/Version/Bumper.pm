@@ -528,7 +528,6 @@ sub _try_compile {
 sub _try_bump_ppi_safely {
     my ( $self, $doc, $version_limit ) = @_;
     my $version  = version::->parse( $self->version );
-    my $filename = $doc->filename;
     $version_limit = version::->parse($version_limit);
 
     # try bumping down version until it compiles
