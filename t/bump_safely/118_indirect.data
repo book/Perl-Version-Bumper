@@ -1,11 +1,3 @@
-########## indirect (no strict)
-$o = new Foo;
----
-use v5.XX;
-$o = new Foo;
---- v5.12
-use v5.10;
-$o = new Foo;
 ########## indirect
 { package Foo }
 my $o = new Foo;
