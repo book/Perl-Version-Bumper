@@ -9,3 +9,7 @@ my $o = new Foo;
 use v5.34;
 { package Foo }
 my $o = new Foo;
+########## no feature 'indirect' DIE
+{ package Foo }
+no feature 'indirect';
+my $o = new Foo;
