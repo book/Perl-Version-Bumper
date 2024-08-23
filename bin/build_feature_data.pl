@@ -7,10 +7,10 @@ use Path::Tiny;
 use feature ();    # to access %feature::feature_bundle
 
 # compute everything we need to know about every feature:
-# - known:       when perl first learnt about the feature
-# - enabled:     when the feature was first enabled (may be before known)
-# - disabled:    when the feature was first disabled
-# - replacement: replacement modules for features to be deprecated / added
+# - known:    when perl first learnt about the feature
+# - enabled:  when the feature was first enabled (may be before it was known)
+# - disabled: when the feature was first disabled
+# - compat:   replacement modules for features to be deprecated / added
 
 my $minor = $^V->{version}[1];    # the current perl minor version
 $minor -= $minor % 2;             # rounded down to the latest stable
