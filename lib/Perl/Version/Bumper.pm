@@ -377,8 +377,8 @@ sub _handle_compat_modules {
                           for $use_feature->elements;
                     }
 
-                    # some features, like 'indirect' or 'multidimensioanl',
-                    # might be enabled before known
+                    # backward compatibility features, like 'indirect',
+                    # can be enabled before being known
                     _drop_statement($include_compat)
                       if exists $feature_in_bundle->{enabled}{$feature}
                       || exists $feature_in_bundle->{known}{$feature};
