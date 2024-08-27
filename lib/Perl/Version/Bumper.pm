@@ -370,7 +370,14 @@ sub _handle_compat_modules {
 
                 # handle `use $compat;`
                 if ( $include_compat->type eq 'use' ) {
-                    if ( exists $feature_in_bundle->{disabled}{$feature} ) {
+
+                    # if the feature is known and neither enabled nor disabled
+                    # and the compat module has an import() sub
+                    if (   exists $feature_in_bundle->{known}{$feature}
+                        && (  !exists $feature_in_bundle->{enabled}{$feature}
+                            || exists $feature_in_bundle->{disabled}{$feature} )
+                        && $feature{$feature}{compat}{$compat} >= 0 )
+                    {
                         my $use_feature =
                           PPI::Document->new( \"use feature '$feature';\n" );
                         $include_compat->insert_after( $_->remove )
@@ -379,9 +386,11 @@ sub _handle_compat_modules {
 
                     # backward compatibility features, like 'indirect',
                     # can be enabled before being known
+                    # (also handle the unlikely case where there's no import())
                     _drop_statement($include_compat)
                       if exists $feature_in_bundle->{enabled}{$feature}
-                      || exists $feature_in_bundle->{known}{$feature};
+                      || exists $feature_in_bundle->{known}{$feature}
+                      || $feature{$feature}{compat}{$compat} < 0;
                 }
             }
         }
@@ -812,6 +821,12 @@ under the same terms as Perl itself.
 #     before they are even 'known' (actually got a feature in Perl).
 #   - are meant to be manually disabled (with `no feature`, until a
 #     later feature bundle  eventually disables them by default.
+#
+# "compat" modules are meant to add support to the feature on perls where
+# it's not available yet. They exist both for new features and backwards
+# compatibility features. The number following the module name in the
+# data structure below is the sum of 1 (if the module has an `import`
+# method) and -1 (if the module has an `unimport` method).
 #
 
 __DATA__
