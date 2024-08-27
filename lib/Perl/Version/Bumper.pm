@@ -851,7 +851,7 @@ __DATA__
                        isa 5.032    5.036000
       bareword_filehandles 5.034    5.01     5.038000 bareword::filehandles 0
           multidimensional 5.034    5.01     5.036000 multidimensional 0
-                       try 5.034    5.040000
+                       try 5.034    5.040000          Syntax::Keyword::Try 0
                      defer 5.036
    extra_paired_delimiters 5.036
                      class 5.038
