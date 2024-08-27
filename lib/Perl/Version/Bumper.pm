@@ -682,6 +682,10 @@ It takes care of removing unnecessary loading of L<feature> and
 L<experimental> L<warnings>, and adds the C<use VERSION> line at the
 top of the file (thus encouraging "line 1 semantics").
 
+It also manages the removal of "compat" modules when the feature they
+provide a compatibility layer with is fully supported in the target
+Perl version.
+
 If the code already declares a Perl version, it can only be bumped
 to a higher version.
 
