@@ -1,7 +1,12 @@
-########## feature isa
+########## use feature 'isa'
 use feature 'isa';
 ---
 use v5.XX;
 use feature 'isa';
 --- v5.36
 use v5.XX;
+########## no feature 'isa'
+no feature 'isa';
+---
+use v5.XX;
+no feature 'isa';
