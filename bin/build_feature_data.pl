@@ -100,9 +100,11 @@ my $feature_data = join '',
   map s/ +\Z//r,    # trim whitespace added by sprintf
   map sprintf( "%26s %-8s %-8s %-8s %s\n", @$_ ),
   [ "$^V feature", qw( known enabled disabled compat ) ],
-  map [ map $_ // '',
-    $_,       $feature{$_}->@{qw( known enabled disabled)},
-    do {
+  map [
+    $_,                                       # feature name
+    map ( $_ ? sprintf "  %5.3f", $_ : '',    # version numbers
+        $feature{$_}->@{qw( known enabled disabled)} ),
+    do {                                      # compat modules
         my $feature = $_;
         join ' ', map +( $_ => $feature{$feature}{compat}{$_} ),
           sort keys %{ $feature{$_}{compat} // {} };
