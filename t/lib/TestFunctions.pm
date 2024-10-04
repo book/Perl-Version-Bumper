@@ -29,7 +29,7 @@ sub test_file {
             # sections starting at a given version number up to the next one
             # are separated by --- (the version is optional in the first one)
             my ( $src, @expected ) = split /^---(.*)\n/m, $data, -1;
-            $expected[0] =~ s/\A *//d if @expected;    # trim
+            $expected[0] =~ s/\A *// if @expected;    # trim
 
             # assume no change up to the first version
             my $expected = $src //= '';
@@ -50,7 +50,7 @@ sub test_file {
                 if ( $minor >= $next_minor ) {
                     ( my $version_todo, $expected ) = splice @expected, 0, 2;
                     ( undef, $todo ) = split / /, $version_todo, 2;
-                    $expected[0] =~ s/\A *//d if @expected;    # trim
+                    $expected[0] =~ s/\A *// if @expected;    # trim
                     $next_minor = @expected
                       ? version->parse( ( split / /, $expected[0] )[0] )->{version}[1]
                       : $stop_at;

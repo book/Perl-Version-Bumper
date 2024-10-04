@@ -1,5 +1,5 @@
 package Perl::Version::Bumper;
-use v5.16;    # %feature::feature_bundle wasn't accessible before v5.16
+use v5.12;
 use warnings;
 
 use Path::Tiny;
@@ -307,13 +307,13 @@ my %feature_shine = (
         # also add an IMPORTANT comment to warn users
         $insert_point = $insert_point->snext_sibling;
         my $todo_comment =
-          PPI::Document->new( \( << '        TODO_COMMENT' =~ s/^ {8}//grm ) );
+          PPI::Document->new( \( << 'TODO_COMMENT' ) );
 
-        # IMPORTANT: Please double-check the use of bitwise operators
-        # before removing the `no feature 'bitwise';` line below.
-        # See manual pages perlfeature (section "The 'bitwise' feature")
-        # and perlop (section "Bitwise String Operators") for details.
-        TODO_COMMENT
+# IMPORTANT: Please double-check the use of bitwise operators
+# before removing the `no feature 'bitwise';` line below.
+# See manual pages perlfeature (section "The 'bitwise' feature")
+# and perlop (section "Bitwise String Operators") for details.
+TODO_COMMENT
         $insert_point->insert_before( $_->remove ) for $todo_comment->elements;
     },
 
@@ -459,7 +459,10 @@ sub _cleanup_bundled_features {
     for my $warn_line ( _find_include( warnings => $doc, 'no' ) ) {
         my @old_args = _ppi_list_to_perl_list( $warn_line->arguments );
         next unless grep /\Aexperimental::/, @old_args;
-        my @new_args = grep !exists $feature_in_bundle->{enabled}{s/\Aexperimental:://r},
+        my @new_args = grep {
+            ( my $feature = $_ ) =~ s/\Aexperimental:://;
+            !exists $feature_in_bundle->{enabled}{$feature};
+          }
           grep /\Aexperimental::/, @old_args;
         my @keep_args = grep !/\Aexperimental::/, @old_args;
         next if @new_args == @old_args    # nothing to remove
@@ -622,10 +625,11 @@ sub bump_file_safely {
     my $doc  = PPI::Document->new( \$code, filename => $file );
     croak "Parsing failed" unless defined $doc;
     $version_limit //= do {
-        my @version_stmts = _version_stmts($doc);
-        @version_stmts
-          ? version::->parse( $version_stmts[0]->version )->normal =~ s/\.0\z//r
-          : 'v5.10';
+        my @versions = map {
+            ( my $v = version::->parse( $_->version )->normal ) =~ s/\.0\z//;
+            $v;
+        } _version_stmts($doc);
+        @versions ? $versions[0] : 'v5.10';
     };
 
     # try compiling the file: if it fails, our safeguard won't work

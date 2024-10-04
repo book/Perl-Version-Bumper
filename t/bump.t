@@ -16,9 +16,10 @@ test_dir(
     callback => sub {
         my ( $perv, $src, $expected, $name ) = @_;
         my $version = $perv->version;
+        $expected =~ s/use v5\.XX;/use $version;/g;
         is(
             $perv->bump($src),
-            $expected =~ s/use v5\.XX;/use $version;/gr,
+            $expected,
             "$name [$version]"
         );
     },
