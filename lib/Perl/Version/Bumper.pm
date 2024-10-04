@@ -698,8 +698,8 @@ to a higher version.
 
 =head2 new
 
-    my $prev = Perl::Version::Bumper->new( %arguments );
-    my $prev = Perl::Version::Bumper->new( \%arguments );
+    my $prev = Perl::Version::Bumper->new( %attributes );
+    my $prev = Perl::Version::Bumper->new( \%attributes );
 
 Return a new C<Perl::Version::Bumper> object.
 
