@@ -59,7 +59,10 @@ my %feature = (
     },
     try => {
         known  => 5.034,
-        compat => { 'Syntax::Keyword::Try' => 0 },      # import / unimport
+        compat => {
+            'Syntax::Keyword::Try' => 0,                # import / unimport
+            'Syntax::Feature::Try' => 0,                # import / unimport
+        },
     },
     defer                   => { known => 5.036 },
     extra_paired_delimiters => { known => 5.036 },
