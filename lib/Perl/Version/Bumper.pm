@@ -804,6 +804,9 @@ under the same terms as Perl itself.
 
 # The following data is used to generate the %feature hash.
 #
+# It is generated using the bin/build_feature_data.pl scrit
+# shipped with the distribution.
+#
 # The keys are:
 # - known:    when perl first learnt about the feature
 # - enabled:  when the feature was first enabled (may be before it was known)
@@ -821,10 +824,11 @@ under the same terms as Perl itself.
 # * Backwards compatibility features (features that existed in older
 #   Perls,  but were later deemed undesirable, and scheduled for being
 #   eventuall disabled or removed):
-#   - are 'enabled' (they were part of the default Perl 5 behaviour
-#     before they are even 'known' (actually got a feature in Perl).
-#   - are meant to be manually disabled (with `no feature`, until a
-#     later feature bundle  eventually disables them by default.
+#   - are 'enabled' in the :default bundle (they were part of the old
+#     Perl 5 behaviour) before they are even 'known' (a feature that
+#     represents them was added to Perl).
+#   - are meant to be manually disabled (with `no feature`), until a
+#     later feature bundle eventually disables them by default.
 #
 # "compat" modules are meant to add support to the feature on perls where
 # it's not available yet. They exist both for new features and backwards
