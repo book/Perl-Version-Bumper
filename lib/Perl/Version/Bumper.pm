@@ -839,28 +839,28 @@ under the same terms as Perl itself.
 
 __DATA__
            v5.40.0 feature known    enabled  disabled compat
-                       say 5.010000 5.010000          Perl6::Say 1 Say::Compat 1
-                     state 5.010000 5.010000
-                    switch 5.010000 5.010000 5.036000
-           unicode_strings 5.012000 5.012000
-                array_base 5.016    5.01     5.016
-               current_sub 5.016000 5.016000
-                 evalbytes 5.016000 5.016000
-                        fc 5.016000 5.016000
-              unicode_eval 5.016000 5.016000
-              lexical_subs 5.018    5.026
-                 postderef 5.02     5.024
-              postderef_qq 5.02     5.024000
-                signatures 5.02     5.036000
-                   bitwise 5.022    5.028000
-               refaliasing 5.022
-             declared_refs 5.026
-                  indirect 5.032    5.01     5.036000 indirect 0
-                       isa 5.032    5.036000
-      bareword_filehandles 5.034    5.01     5.038000 bareword::filehandles 0
-          multidimensional 5.034    5.01     5.036000 multidimensional 0
-                       try 5.034    5.040000          Syntax::Keyword::Try 0
-                     defer 5.036
-   extra_paired_delimiters 5.036
-                     class 5.038
-               module_true 5.038    5.038000
+                       say   5.010    5.010           Perl6::Say 1 Say::Compat 1
+                     state   5.010    5.010
+                    switch   5.010    5.010    5.036
+           unicode_strings   5.012    5.012
+                array_base   5.016    5.010    5.016
+               current_sub   5.016    5.016
+                 evalbytes   5.016    5.016
+                        fc   5.016    5.016
+              unicode_eval   5.016    5.016
+              lexical_subs   5.018    5.026
+                 postderef   5.020    5.024
+              postderef_qq   5.020    5.024
+                signatures   5.020    5.036
+                   bitwise   5.022    5.028
+               refaliasing   5.022
+             declared_refs   5.026
+                  indirect   5.032    5.010    5.036  indirect 0
+                       isa   5.032    5.036
+      bareword_filehandles   5.034    5.010    5.038  bareword::filehandles 0
+          multidimensional   5.034    5.010    5.036  multidimensional 0
+                       try   5.034    5.040           Syntax::Keyword::Try 0
+                     defer   5.036
+   extra_paired_delimiters   5.036
+                     class   5.038
+               module_true   5.038    5.038

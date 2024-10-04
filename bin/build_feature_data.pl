@@ -57,7 +57,10 @@ my %feature = (
         enabled => 5.010,
         compat  => { 'bareword::filehandles' => 0 },    # import / unimport
     },
-    try                     => { known => 5.034 },
+    try => {
+        known  => 5.034,
+        compat => { 'Syntax::Keyword::Try' => 0 },      # import / unimport
+    },
     defer                   => { known => 5.036 },
     extra_paired_delimiters => { known => 5.036 },
     module_true             => { known => 5.038 },
