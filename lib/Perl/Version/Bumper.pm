@@ -1,5 +1,6 @@
 package Perl::Version::Bumper;
-use v5.12;
+use v5.10;
+use strict;
 use warnings;
 
 use Path::Tiny;

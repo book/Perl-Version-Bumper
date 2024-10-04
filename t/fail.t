@@ -1,3 +1,6 @@
+use v5.10;
+use strict;
+use warnings;
 use Test2::V0;
 
 use Perl::Version::Bumper;
@@ -8,14 +11,18 @@ $this_minor-- if $this_minor % 2;      # rounded down to the latest stable
 
 # constructor errors
 my @errors = (
-    [ '6.0.1' => qr{\AMajor version number must be 5, not 6 } ],
-    [ 'v4.2'  => qr{\AMajor version number must be 5, not 4 } ],
-    [ 'v5.15' => qr{\AMinor version number must be even, not 15 } ],
-    [ 'v5.25' => qr{\AMinor version number must be even, not 25 } ],
+    [ '6.0.1'  => qr{\AMajor version number must be 5, not 6 } ],
+    [ 'v4.2'   => qr{\AMajor version number must be 5, not 4 } ],
+    [ 'v5.15'  => qr{\AMinor version number must be even, not 15 } ],
+    [ 'v5.25'  => qr{\AMinor version number must be even, not 25 } ],
     [ '5.28'   => qr{\AMinor version number 280 > $max_minor } ],
     [ 'v5.100' => qr{\AMinor version number 100 > $max_minor } ],
     [ 'v5.8'   => qr{\AMinor version number 8 < 10 } ],
-    [ 'not'    => qr{\AInvalid version format \(non-numeric data\)} ],
+    [    # returns 0 in v5.10, dies otherwise
+        'not' => eval { version->new('not') || 1 }
+        ? qr{\AMajor version number must be 5, not 0 }
+        : qr{\AInvalid version format \(non-numeric data\)}
+    ],
 );
 
 # check the default

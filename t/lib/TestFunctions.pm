@@ -1,3 +1,6 @@
+use v5.10;
+use strict;
+use warnings;
 use Test2::V0;
 use Path::Tiny;
 use Perl::Version::Bumper;
@@ -42,7 +45,7 @@ sub test_file {
                       || 'v5.10'   # bare --- (no version, default to v5.10)
                     : ''           # no "expected" section (the empty case)
                 )[0]
-            )->{version}[1] // $stop_at;
+            )->{version}[1] || $stop_at;    # might return 0 or undef
 
             my $todo;          # not a todo test by default
             my $minor = 10;    # always start at v5.10

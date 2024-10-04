@@ -1,4 +1,6 @@
 use v5.10;
+use strict;
+use warnings;
 use Test2::V0;
 use Path::Tiny;
 use Perl::Version::Bumper;
