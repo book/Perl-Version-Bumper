@@ -64,6 +64,16 @@ my %feature = (
     class                   => { known => 5.038 },
 );
 
+# we need a recent enough Perl
+{
+    my $min_version = 5;
+    $min_version < $_ and $min_version = $_
+      for map $_->{known} // (), values %feature;
+    die sprintf "Perl v%.3f required--this is only v%.3f, stopped.\n",
+      $min_version, $]
+      if $] < $min_version;
+}
+
 # update when each feature was enabled
 for my $bundle ( map "5.$_", grep !( $_ % 2 ), 10 .. $minor ) {
     my $bundle_num = version::->parse("v$bundle")->numify;
