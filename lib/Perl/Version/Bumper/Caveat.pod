@@ -1,3 +1,9 @@
+=encoding utf8
+
+=head1 NAME
+
+Perl::Version::Bumper::Caveat - Do's and don't of C<use VERSION>
+
 # Preamble
 
 Pay attention to the case of words!  In this document:

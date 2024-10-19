@@ -50,8 +50,8 @@ in the rest of this document.  As explained above, C<perl> (lowercase,
 monospace) is the I<binary>, i.e. the actual program that compiles and
 runs your Perl code, whereas Perl (initial capital) is the I<language>.
 
-The version of the binary and the version of the language mean slightly
-different things, as we'll explore below.
+The version of the language is a somewhat more complicated topic,
+as we'll explore below.
 
 =head2 Perl features
 
