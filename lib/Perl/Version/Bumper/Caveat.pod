@@ -4,6 +4,45 @@
 
 Perl::Version::Bumper::Caveat - Do's and don't of C<use VERSION>
 
+=head1 Differences between C<use>, C<no>, C<require> C<VERSION>
+
+=head2 C<use VERSION>
+
+Technically, this checks that the C<perl> I<binary> is at least
+the requested version. It also loads the corresponding
+L<feature/"FEATURE BUNDLES"> and L<builtin/"Version Bundles">.
+
+=head2 C<no VERSION>
+
+Quoting from L<perlfunc/"use VERSION">:
+
+I<
+Care should be taken when using the C<no VERSION> form, as it is I<only>
+meant to be used to assert that the running Perl is of an earlier version
+than its argument and I<not> to undo the feature-enabling side effects
+of C<use VERSION>.
+>
+
+=head2 C<require VERSION>
+
+Demands a version of Perl specified by VERSION.
+
+A runtime exception is raised if VERSION is greater than
+the version of the current Perl interpreter. 
+
+          An exception is raised if VERSION is greater than the version of
+            the current Perl interpreter. Compare with "use", which can do a
+            similar check at compile time.
+
+in particular, does not enable the features / builtins
+
+
+=head1 Comparisons involving C<$]> or C<$^V>
+
+Comparing the perl runtime version: useful to work around bugs
+
+
+
 # Preamble
 
 Pay attention to the case of words!  In this document:
@@ -27,15 +66,34 @@ use v5.10;
 use feature 'lexical_subs';
 ```
 
-* will die on any `perl` that doesn't know about the `lexical_subs` feature
-  (i.e. all of them up until version v5.18)
-* will compile (and run) fine on any `perl` that knows about it
+=over 4
+
+=item *
+
+will die on any `perl` that doesn't know about the `lexical_subs` feature
+(i.e. all of them up until version v5.18)
+
+=item *
+
+will compile (and run) fine on any `perl` that knows about it
+
+=back
 
 The "Perl language" that the rest of the file works with:
-* knows about `say`, `state`, `switch` (the switch keywords will throw a
-  warning in the `deprecated` category when used on any `perl` after
-  v5.18)
-* knows about lexical subroutines
+
+=over 4
+
+=item *
+
+knows about C<say>, C<state>, C<switch> (the C<switch> keywords will throw a
+warning in the C<deprecated> category when used on any C<perl> after
+v5.18)
+
+=item *
+
+knows about lexical subroutines
+
+=back
 
 This is a 
 
@@ -101,7 +159,7 @@ This code:
 
     use feature 'signatures';
 
-will die with any perl before perl5.20.0, because the binary does not
+will die with any stable perl before perl5.20.0, because the binary does not
 know about the feature itself.  However, that should not prevent a
 perl5.20.0 to bump it to any version of the language.
 
