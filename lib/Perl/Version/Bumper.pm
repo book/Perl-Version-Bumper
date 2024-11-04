@@ -32,6 +32,48 @@ while (<DATA>) {
     $feature{$feature}{compat}   = {@compat} if @compat;
 }
 
+# EXPORTABLE FUNCTIONS
+
+use Exporter 'import';
+
+our @EXPORT_OK = qw(
+    version_fmt
+    version_fix
+    version_inc
+    version_dec
+);
+
+# return a normalized version of a plausible Perl version number (or die)
+sub version_fmt {
+    my $o = shift // $];
+    my $v = version::->parse($o)->numify;    # accept strings too
+    return $v < 5.010
+      ? croak "Unexpected Perl version number: $o"
+      : sprintf "%.3f", $v;                  # Perl version bundle
+}
+
+# return the closest stable version number lower than the parameter
+sub version_fix {
+    my $v = version_fmt(shift);
+    $v *= 1000;
+    return sprintf "%.3f", ( int($v) - $v % 2 ) / 1000;
+}
+
+# increment the version number to the next stable version
+sub version_inc {
+    my $v = version_fix(shift);    # closest previous stable
+    return sprintf "%.3f", $v + 0.002;
+}
+
+# decrement the version number to the previous stable version
+sub version_dec {
+    my $v = version_fmt(shift);    # format the version
+    my $f = version_fix($v);       # get the closest previous stable
+    return $v ne $f
+      ? $f                         # dev -> previous stable
+      : sprintf "%.3f", $f - 0.002 # previous stable
+}
+
 # CLASS METHODS
 
 sub feature_version { $feature_version }
@@ -694,6 +736,9 @@ Perl version.
 If the code already declares a Perl version, it can only be bumped
 to a higher version.
 
+The module L<exports|/EXPORTS> a few helper functions, which are mostly used
+by support tools for this distribution. They are not meant for general use.
+
 =head1 CONSTRUCTOR
 
 =head2 new
@@ -785,6 +830,42 @@ or C<$version_limit>, whichever is the more recent.
 The return value is C<undef> if the original didn't compile, false
 (empty string) if all attempts to bump the file failed, and the actual
 version number the file was bumped to in case of success.
+
+=head1 EXPORTS
+
+The following I<functions> can be optionally exported:
+
+=head2 version_fmt
+
+    my $v = version_fmt( $version );
+
+Return the given version (in string, v-string or float format) as a number.
+
+This function will die if the given version is not a plausible Perl
+version number, i.e. is strictly lower than C<5.010>.
+
+Note that all the following functions start by normalizing their
+argument by calling L</version_fmt>, meaning they will die in the same
+circumstances.
+
+=head2 version_fix
+
+    my $s = version_fix( $version );
+
+Return the closest stable version lower or equal to the given version,
+as a number.
+
+=head2 version_inc
+
+    my $n = version_inc( $version );
+
+Return the stable version following the given version, as a number.
+
+=head2 version_dec
+
+    my $p = version_dec( $version );
+
+Return the stable version preceding the given version, as a number.
 
 =head1 ACKNOWLEDGMENT
 
