@@ -534,7 +534,7 @@ sub _cleanup_bundled_features {
 
 sub _insert_version_stmt {
     my ( $self, $doc, $old_num ) = @_;
-    $old_num //= version::->parse( 'v5.8' )->numify;
+    $old_num //= 5.008;
     my $version_stmt =
       PPI::Document->new( \sprintf "use %s;\n", $self->version );
     my $insert_point = $doc->schild(0) // $doc->child(0);
@@ -584,12 +584,12 @@ sub _try_compile {
 
 sub _try_bump_ppi_safely {
     my ( $self, $doc, $version_limit ) = @_;
-    my $version  = version::->parse( $self->version );
-    $version_limit = version::->parse($version_limit);
+    my $version = $self->version_num;
+    $version_limit = version_fmt($version_limit);
 
     # try bumping down version until it compiles
     while ( $version >= $version_limit or $version = '' ) {
-        my $perv = $self->version eq $version
+        my $perv = $self->version_num eq $version
           ? $self    # no need to create a new object
           : Perl::Version::Bumper->new( version => $version );
         my $tmp = Path::Tiny->tempfile;
@@ -599,8 +599,7 @@ sub _try_bump_ppi_safely {
         last if _try_compile( $tmp );
 
         # bump version down and repeat
-        $version =
-          version::->parse( 'v5.' . ( ( split /\./, $version )[1] - 2 ) );
+        $version = stable_version_dec($version);
     }
 
     return $version;
@@ -626,9 +625,8 @@ sub bump_ppi {
         # and add the new one at the top
         else {
             my ($use_v) = _version_stmts($doc);    # there's only one
-            my ( $old_num, $new_num ) = map version::->parse($_)->numify,
-              $use_v->version, $self->version;
-            if ( $old_num <= $new_num ) {
+            my $old_num = version::->parse( $use_v->version )->numify;
+            if ( $old_num <= $self->version_num ) {
                 _insert_version_stmt( $self, $doc, $old_num );
                 _drop_statement( $use_v, 1 );
             }
@@ -670,10 +668,8 @@ sub bump_file_safely {
     my $doc  = PPI::Document->new( \$code, filename => $file );
     croak "Parsing failed" unless defined $doc;
     $version_limit //= do {
-        my @versions = map {
-            ( my $v = version::->parse( $_->version )->normal ) =~ s/\.0\z//;
-            $v;
-        } _version_stmts($doc);
+        my @versions = map eval { version_fmt( $_->version ) },
+          _version_stmts($doc);
         @versions ? $versions[0] : 'v5.10';
     };
 
