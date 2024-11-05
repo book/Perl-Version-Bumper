@@ -3,36 +3,38 @@ use strict;
 use warnings;
 use Test2::V0;
 
-use Perl::Version::Bumper;
+use Perl::Version::Bumper qw(
+    version_fmt
+    stable_version
+);
 
-my $max_minor  = ( split /\./, Perl::Version::Bumper->feature_version )[1];
-my $this_minor = $^V->{version}[1];    # this Perl's minor version
-$this_minor-- if $this_minor % 2;      # rounded down to the latest stable
+my $max_version = Perl::Version::Bumper->feature_version;
+my $this_version = stable_version;  # round current version to the latest stable
 
 # constructor errors
 my @errors = (
-    [ '6.0.1'  => qr{\AMajor version number must be 5, not 6 } ],
-    [ 'v4.2'   => qr{\AMajor version number must be 5, not 4 } ],
-    [ 'v5.15'  => qr{\AMinor version number must be even, not 15 } ],
-    [ 'v5.25'  => qr{\AMinor version number must be even, not 25 } ],
-    [ '5.28'   => qr{\AMinor version number 280 > $max_minor } ],
-    [ 'v5.100' => qr{\AMinor version number 100 > $max_minor } ],
-    [ 'v5.8'   => qr{\AMinor version number 8 < 10 } ],
+    [ '6.0.1'  => qr{\AUnsupported Perl version: 6\.0\.1 \(greater than \Q$max_version\E\) } ],
+    [ 'v4.2'   => qr{\AUnsupported Perl version: v4\.2 } ],
+    [ 'v5.15'  => qr{\Av5\.15 is not a stable Perl version } ],
+    [ 'v5.25'  => qr{\Av5\.25 is not a stable Perl version } ],
+    [ '5.28'   => qr{\AUnsupported Perl version: 5\.28 \(greater than \Q$max_version\E\) } ],
+    [ 'v5.100' => qr{\AUnsupported Perl version: v5\.100 \(greater than \Q$max_version\E\) } ],
+    [ 'v5.8'   => qr{\AUnsupported Perl version: v5\.8 } ],
     [    # returns 0 in v5.10, dies otherwise
         'not' => eval { version->new('not') || 1 }
-        ? qr{\AMajor version number must be 5, not 0 }
+        ? qr{\AUnsupported Perl version: not }
         : qr{\AInvalid version format \(non-numeric data\)}
     ],
 );
 
 # check the default
-if ( $this_minor > $max_minor ) {
+if ( $this_version > $max_version ) {
     push @errors,
-      [ '' => qr{\AMinor version number $this_minor > $max_minor } ],;
+      [ '' => qr{\AUnsupported Perl version: \Q$this_version\E \(greater than \Q$max_version\E\) } ];
 }
 else {
-    is( Perl::Version::Bumper->new->version,
-        "v5.$this_minor", "default version is v5.$this_minor" );
+    is( Perl::Version::Bumper->new->version_num,
+        $this_version, "default version is $this_version" );
 }
 
 for my $e (@errors) {
@@ -59,7 +61,7 @@ my %version = qw(
   v5.32.1     v5.32
 );
 
-version->parse( $version{$_} )->{version}[1] <= $this_minor
+version_fmt( $version{$_} ) <= $this_version
   ? is( Perl::Version::Bumper->new( version => $_ )->version,
     $version{$_}, "$_ => $version{$_}" )
   : do {

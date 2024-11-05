@@ -113,7 +113,6 @@ sub _feature_in_bundle {
 }
 
 sub new {
-    state $max_minor = ( split /\./, $feature_version )[1];
 
     # stolen from Moo::Object
     my $class = shift;
@@ -129,24 +128,17 @@ sub new {
     ;
 
     # handle the version attribute
-    $args->{version} //= $^V;
-    my $version = version::->parse( $args->{version} );
-    my ( $major, $minor ) = @{ $version->{version} };
-    croak "Major version number must be 5, not $major"
-      if $major != 5;
-    croak "Minor version number $minor > $max_minor"
-      if $minor > $max_minor;
-    croak "Minor version number $minor < 10"
-      if $minor < 10;
-    croak "Minor version number must be even, not $minor"
-      if $minor % 2;
-    $args->{version} = "v$major.$minor";
+    my $version_arg = $args->{version} // $];
+    my $version_num = version_fmt( $version_arg );
+    croak "Unsupported Perl version: $version_arg (greater than $feature_version)"
+      if $version_num > $feature_version;
+    croak "$args->{version} is not a stable Perl version"
+      if $version_num ne stable_version($version_num);
 
-    my $version_num = version::->parse( $args->{version} )->numify;
     return bless {
-        version           => $args->{version},
+        version           => version_use($version_num),
         version_num       => $version_num,
-        feature_in_bundle => _feature_in_bundle( $version_num ),
+        feature_in_bundle => _feature_in_bundle($version_num),
     }, $class;
 };
 
