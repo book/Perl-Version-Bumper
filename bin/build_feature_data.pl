@@ -8,18 +8,30 @@ use Perl::Version::Bumper qw(
     stable_version
     stable_version_inc
 );
-
+use Getopt::Long;
 
 use feature ();    # to access %feature::feature_bundle
+
+GetOptions( \my %option, 'version=s' )
+  or die "Usage: $0 [ --version <version> ]\n";
+
+my $version = $option{version}
+  ? version_fmt( $option{version} )    # die if given a bad Perl version
+  : stable_version;   # current perl version rounded down to the previous stable
+
+# this Perl doesn't know about the future
+die "$version is larger than $^V\n"
+  if $version > $];
+
+# only build the table for stable Perls
+die "$version is not a stable Perl version\n"
+  if $version ne stable_version($version);
 
 # compute everything we need to know about every feature:
 # - known:    when perl first learnt about the feature
 # - enabled:  when the feature was first enabled (may be before it was known)
 # - disabled: when the feature was first disabled
 # - compat:   replacement modules for features to be deprecated / added
-
-# the current perl version rounded down to the latest stable
-my $stable = stable_version($]);
 
 # features are listed in the order of the perlfeature manual page
 # (the information that can't be computed is pre-filled)
@@ -76,20 +88,9 @@ my %feature = (
     class                   => { known => 5.038 },
 );
 
-# remove data more recent than the perl we're running
-# (makes it easier to run with any perl, even if we
-# only really care
-for my $feature ( keys %feature ) {
-    exists $feature{$feature}{$_} && $feature{$feature}{$_} > $]
-      and delete $feature{$feature}{$_}
-      for qw( known enabled disabled );
-    delete $feature{$feature}
-      if join( '', keys %{ $feature{$feature} } ) =~ /\A(?:compat)?\z/;
-}
-
 # complete the %features data structure
 my $bundle_num = '5.010';
-while ( $bundle_num <= $stable ) {
+while ( $bundle_num <= $version ) {
 
     # bundles are v-strings without the v
     my $bundle = join '.', 5, 0 + ( split /\./, $bundle_num )[1];
@@ -124,11 +125,23 @@ continue {
 # cleanup weird artifacts (%noops in feature.pm)
 delete $feature{$_}{disabled} for qw( postderef lexical_subs );
 
+# remove data more recent than the perl we're running
+# (makes it easier to run with any perl, even if we
+# only really care about the latest one)
+for my $feature ( keys %feature ) {
+    for (qw( known enabled disabled )) {
+        delete $feature{$feature}{$_}
+          if $feature{$feature}{$_} && $feature{$feature}{$_} > $version;
+    }
+    delete $feature{$feature}
+      if !exists $feature{$feature}{known};
+}
+
 # build the tabular data
 my $feature_data = join '',
   map s/ +\Z//r,    # trim whitespace added by sprintf
   map sprintf( "%26s %-8s %-8s %-8s %s\n", @$_ ),
-  [ version_fmt($]) . ' features', qw( known enabled disabled compat ) ],
+  [ "$version features", qw( known enabled disabled compat ) ],
   map [
     $_,                                       # feature name
     map ( $_ ? sprintf "  %5.3f", $_ : '',    # version numbers
