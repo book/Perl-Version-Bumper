@@ -4,21 +4,18 @@ use warnings;
 use Test2::V0;
 use Path::Tiny;
 use List::Util qw( min );
+use Perl::Version::Bumper qw( stable_version );
 
 # t/lib
 use lib path(__FILE__)->parent->child('lib')->stringify;
 use TestFunctions;
 
-# latest stable supported by the module
-my $stop_minor = ( split /\./, Perl::Version::Bumper->feature_version )[1];
-
-# latest stable supported by the perl binary
-my $max_minor = ( split /\./, $^V )[1];
-$max_minor -= $max_minor % 2;    # latest stable
-
 test_dir(
-    dir      => 'bump_safely',
-    stop_at  => min( $stop_minor, $max_minor ),   # stop at the earliest
+    dir     => 'bump_safely',
+    stop_at => min(             # stop at the earliest stable between those:
+        stable_version,                         # - supported by the perl binary
+        Perl::Version::Bumper->feature_version, # - supported by the module
+    ),
     callback => sub {
         my ( $perv, $src, $expected, $name ) = @_;
         my $version = $perv->version;
@@ -46,9 +43,9 @@ test_dir(
         # check the return value:
         # - undef if compilation of the original fail
         # - defined if the original snippet compiled
-        if ( $name =~ /DIE(?: *< *v5\.([0-9]+))?/ ) {   # compilation might fail
+        if ( $name =~ /DIE(?: *< *(v5.[0-9]+))?/ ) {    # compilation might fail
             if ($1) {                                   # on an older perl binary
-                if ( $^V < version::->parse("v5.$1") ) {
+                if ( $] < version_fmt($1) ) {
                     is( $ran, U, "$this did not compile on $^V" );
                     $expected = $src;    # no change expected
                 }
