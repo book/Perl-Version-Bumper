@@ -5,8 +5,8 @@ use warnings;
 use Path::Tiny;
 use Perl::Version::Bumper qw(
     version_fmt
-    version_fix
-    version_inc
+    stable_version
+    stable_version_inc
 );
 
 
@@ -19,7 +19,7 @@ use feature ();    # to access %feature::feature_bundle
 # - compat:   replacement modules for features to be deprecated / added
 
 # the current perl version rounded down to the latest stable
-my $stable = version_fix($]);
+my $stable = stable_version($]);
 
 # features are listed in the order of the perlfeature manual page
 # (the information that can't be computed is pre-filled)
@@ -118,7 +118,7 @@ while ( $bundle_num <= $stable ) {
 
 }
 continue {
-    $bundle_num = version_inc($bundle_num);
+    $bundle_num = stable_version_inc($bundle_num);
 }
 
 # cleanup weird artifacts (%noops in feature.pm)

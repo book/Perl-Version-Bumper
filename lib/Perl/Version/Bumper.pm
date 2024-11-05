@@ -37,9 +37,9 @@ use Exporter 'import';
 our @EXPORT_OK = qw(
     version_fmt
     version_use
-    version_fix
-    version_inc
-    version_dec
+    stable_version
+    stable_version_inc
+    stable_version_dec
 );
 
 # return a normalized version of a plausible Perl version number (or die)
@@ -61,25 +61,25 @@ sub version_use {
 }
 
 # return the closest stable version number lower than the parameter
-sub version_fix {
+sub stable_version {
     my $v = version_fmt(shift);
     $v *= 1000;
     return sprintf "%.3f", ( int($v) - $v % 2 ) / 1000;
 }
 
 # increment the version number to the next stable version
-sub version_inc {
-    my $v = version_fix(shift);    # closest previous stable
+sub stable_version_inc {
+    my $v = stable_version(shift);    # closest previous stable
     return sprintf "%.3f", $v + 0.002;
 }
 
 # decrement the version number to the previous stable version
-sub version_dec {
+sub stable_version_dec {
     my $v = version_fmt(shift);    # format the version
-    my $f = version_fix($v);       # get the closest previous stable
-    return $v ne $f
-      ? $f                         # dev -> previous stable
-      : sprintf "%.3f", $f - 0.002 # previous stable
+    my $s = stable_version($v);    # get the closest previous stable
+    return $v ne $s
+      ? $s                         # dev -> previous stable
+      : sprintf "%.3f", $s - 0.002 # previous stable
 }
 
 # CLASS METHODS
@@ -863,22 +863,22 @@ circumstances.
 Return the given version (in string, v-string or float format) as
 a string suitable for a C<use VERSION> line.
 
-=head2 version_fix
+=head2 stable_version
 
-    my $s = version_fix( $version );
+    my $s = stable_version( $version );
 
 Return the closest stable version lower or equal to the given version,
 as a number.
 
-=head2 version_inc
+=head2 stable_version_inc
 
-    my $n = version_inc( $version );
+    my $n = stable_version_inc( $version );
 
 Return the stable version following the given version, as a number.
 
-=head2 version_dec
+=head2 stable_version_dec
 
-    my $p = version_dec( $version );
+    my $p = stable_version_dec( $version );
 
 Return the stable version preceding the given version, as a number.
 
