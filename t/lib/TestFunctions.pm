@@ -3,7 +3,10 @@ use strict;
 use warnings;
 use Test2::V0;
 use Path::Tiny;
-use Perl::Version::Bumper;
+use Perl::Version::Bumper qw(
+  version_fmt
+  stable_version_inc
+);
 
 sub test_dir {
     my %args = @_;
@@ -14,16 +17,13 @@ sub test_dir {
 sub test_file {
     my %args    = @_;
     my $file    = $args{file};
-    my $stop_at = $args{stop_at} + 2;
+    my $stop_at = stable_version_inc( $args{stop_at} );
 
     # blocks of test data are separated by ##########
     my @tests = split /^########## (.*)\n/m, path($file)->slurp;
     return diag("$file is empty") unless @tests;
 
     shift @tests;    # drop the test preamble
-
-    my $todo;        # not a TODO by default
-    my $minor = 10;  # always start at v5.10
 
     subtest $file => sub {
 
@@ -38,36 +38,33 @@ sub test_file {
             my $expected = $src //= '';
 
             # this is when we'll update our expectations
-            my $next_minor = version->parse(
-                (
-                    split / /, defined $expected[0]
-                    ? $expected[0]
-                      || 'v5.10'   # bare --- (no version, default to v5.10)
-                    : ''           # no "expected" section (the empty case)
-                )[0]
-            )->{version}[1] || $stop_at;    # might return 0 or undef
+            my $next_version = defined $expected[0]
+              ? $expected[0]
+                  ? version_fmt( ( split / /, $expected[0] )[0] )
+                  : 5.010    # bare --- (no version, default to v5.10)
+              : $stop_at;    # no "expected" section (the empty case)
 
-            my $todo;          # not a todo test by default
-            my $minor = 10;    # always start at v5.10
-            while ( $minor < $stop_at ) {
-                if ( $minor >= $next_minor ) {
+            my $todo;    # not a todo test by default
+            my $version = 5.010;    # always start at v5.10
+            while ( $version < $stop_at ) {
+                if ( $version >= $next_version ) {
                     ( my $version_todo, $expected ) = splice @expected, 0, 2;
                     ( undef, $todo ) = split / /, $version_todo, 2;
                     $expected[0] =~ s/\A *// if @expected;    # trim
-                    $next_minor = @expected
-                      ? version->parse( ( split / /, $expected[0] )[0] )->{version}[1]
+                    $next_version = @expected
+                      ? version_fmt( ( split / /, $expected[0] )[0] )
                       : $stop_at;
                 }
                 $todo &&= todo $todo;
 
                 $args{callback}->(
-                    Perl::Version::Bumper->new( version => "v5.$minor" ),
+                    Perl::Version::Bumper->new( version => $version ),
                     $src, $expected, $name
                 );
             }
 
             # bump to  the next stable
-            continue { $minor += 2 }
+            continue { $version = stable_version_inc( $version ) }
 
         }
     }
