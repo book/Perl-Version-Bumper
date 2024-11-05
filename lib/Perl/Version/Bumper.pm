@@ -13,10 +13,8 @@ use Carp qw( carp croak );
 my ( $feature_version, %feature );
 while (<DATA>) {
     chomp;
-    if (/\A *(v5\.[0-9.]+)/) {    # header line
-        my $minor = version::->parse($1)->{version}[1];
-        $minor -= $minor % 2;
-        $feature_version = "v5.$minor";
+    if (/\A *([1-9][0-9.]*)/) {    # header line
+        $feature_version = version_fmt($1);
         next;
     }
     no warnings;    # substr outside of string
@@ -924,7 +922,7 @@ under the same terms as Perl itself.
 #
 
 __DATA__
-           v5.40.0 feature known    enabled  disabled compat
+            5.040 features known    enabled  disabled compat
                        say   5.010    5.010           Perl6::Say 1 Say::Compat 1
                      state   5.010    5.010
                     switch   5.010    5.010    5.036

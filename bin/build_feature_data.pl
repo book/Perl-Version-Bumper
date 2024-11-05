@@ -3,6 +3,12 @@ use v5.32;
 use warnings;
 
 use Path::Tiny;
+use Perl::Version::Bumper qw(
+    version_fmt
+    version_fix
+    version_inc
+);
+
 
 use feature ();    # to access %feature::feature_bundle
 
@@ -12,8 +18,8 @@ use feature ();    # to access %feature::feature_bundle
 # - disabled: when the feature was first disabled
 # - compat:   replacement modules for features to be deprecated / added
 
-my $minor = $^V->{version}[1];    # the current perl minor version
-$minor -= $minor % 2;             # rounded down to the latest stable
+# the current perl version rounded down to the latest stable
+my $stable = version_fix($]);
 
 # features are listed in the order of the perlfeature manual page
 # (the information that can't be computed is pre-filled)
@@ -80,9 +86,12 @@ my %feature = (
       if $] < $min_version;
 }
 
-# update when each feature was enabled
-for my $bundle ( map "5.$_", grep !( $_ % 2 ), 10 .. $minor ) {
-    my $bundle_num = version::->parse("v$bundle")->numify;
+# complete the %features data structure
+my $bundle_num = '5.010';
+while ( $bundle_num <= $stable ) {
+
+    # bundles are v-strings without the v
+    my $bundle = join '.', 5, 0 + ( split /\./, $bundle_num )[1];
 
     # when was the feature enabled
     $feature{$_}{enabled} //= $bundle_num
@@ -107,6 +116,9 @@ for my $bundle ( map "5.$_", grep !( $_ % 2 ), 10 .. $minor ) {
     }
 
 }
+continue {
+    $bundle_num = version_inc($bundle_num);
+}
 
 # cleanup weird artifacts (%noops in feature.pm)
 delete $feature{$_}{disabled} for qw( postderef lexical_subs );
@@ -115,7 +127,7 @@ delete $feature{$_}{disabled} for qw( postderef lexical_subs );
 my $feature_data = join '',
   map s/ +\Z//r,    # trim whitespace added by sprintf
   map sprintf( "%26s %-8s %-8s %-8s %s\n", @$_ ),
-  [ "$^V feature", qw( known enabled disabled compat ) ],
+  [ version_fmt($]) . ' features', qw( known enabled disabled compat ) ],
   map [
     $_,                                       # feature name
     map ( $_ ? sprintf "  %5.3f", $_ : '',    # version numbers
