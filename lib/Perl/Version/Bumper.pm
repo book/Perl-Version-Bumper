@@ -36,6 +36,7 @@ use Exporter 'import';
 
 our @EXPORT_OK = qw(
     version_fmt
+    version_use
     version_fix
     version_inc
     version_dec
@@ -44,10 +45,19 @@ our @EXPORT_OK = qw(
 # return a normalized version of a plausible Perl version number (or die)
 sub version_fmt {
     my $o = shift // $];
-    my $v = version::->parse($o)->numify;    # accept strings too
+    my $v = version::->parse($o)->numify;    # accept everything
     return $v < 5.010
       ? croak "Unexpected Perl version number: $o"
       : sprintf "%.3f", $v;                  # Perl version bundle
+}
+
+# return a normalized version, suitable for "use VERSION"
+sub version_use {
+    my $o = shift // $];
+    my $v = version::->parse($o)->numify;    # accept everything
+    return $v < 5.010
+      ? croak "Unexpected Perl version number: $o"
+      : sprintf 'v5.%d', substr( $v, 2, 3 );    # Perl version bundle
 }
 
 # return the closest stable version number lower than the parameter
@@ -845,6 +855,13 @@ version number, i.e. is strictly lower than C<5.010>.
 Note that all the following functions start by normalizing their
 argument by calling L</version_fmt>, meaning they will die in the same
 circumstances.
+
+=head2 version_use
+
+    my $v = version_use( $version );
+
+Return the given version (in string, v-string or float format) as
+a string suitable for a C<use VERSION> line.
 
 =head2 version_fix
 
