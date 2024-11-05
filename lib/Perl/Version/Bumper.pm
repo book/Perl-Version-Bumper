@@ -47,7 +47,7 @@ sub version_fmt {
     my $o = shift // $];
     my $v = version::->parse($o)->numify;    # accept everything
     return $v < 5.010
-      ? croak "Unexpected Perl version number: $o"
+      ? croak "Unsupported Perl version: $o"
       : sprintf "%.3f", $v;                  # Perl version bundle
 }
 
@@ -56,7 +56,7 @@ sub version_use {
     my $o = shift // $];
     my $v = version::->parse($o)->numify;    # accept everything
     return $v < 5.010
-      ? croak "Unexpected Perl version number: $o"
+      ? croak "Unsupported Perl version: $o"
       : sprintf 'v5.%d', substr( $v, 2, 3 );    # Perl version bundle
 }
 
