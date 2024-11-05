@@ -780,7 +780,7 @@ is lower than the version of the Perl currently running,
 
 =item *
 
-is even (this module targets stable Perl versions only).
+is a stable Perl version.
 
 =back
 
