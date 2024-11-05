@@ -47,6 +47,7 @@ our @EXPORT_OK = qw(
 # return a normalized version of a plausible Perl version number (or die)
 sub version_fmt {
     my $o = shift // $];
+    $o = $] unless length $o;
     my $v = version::->parse($o)->numify;    # accept everything
     return $v < 5.010
       ? croak "Unsupported Perl version: $o"
@@ -56,6 +57,7 @@ sub version_fmt {
 # return a normalized version, suitable for "use VERSION"
 sub version_use {
     my $o = shift // $];
+    $o = $] unless length $o;
     my $v = version::->parse($o)->numify;    # accept everything
     return $v < 5.010
       ? croak "Unsupported Perl version: $o"
