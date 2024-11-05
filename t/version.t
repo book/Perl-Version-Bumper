@@ -31,7 +31,7 @@ for my $v ( sort keys %tests ) {
 for my $v (qw( 5.008 2 4.036 )) {
     like(
         dies { version_fmt($v) },
-        qr/\AUnexpected Perl version number: \Q$v\E /,
+        qr/\AUnsupported Perl version: \Q$v\E /,
         "version_fmt( $v ) fails"
     );
 }
