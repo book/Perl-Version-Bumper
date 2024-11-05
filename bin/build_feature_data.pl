@@ -76,14 +76,15 @@ my %feature = (
     class                   => { known => 5.038 },
 );
 
-# we need a recent enough Perl
-{
-    my $min_version = 5;
-    $min_version < $_ and $min_version = $_
-      for map $_->{known} // (), values %feature;
-    die sprintf "Perl v%.3f required--this is only v%.3f, stopped.\n",
-      $min_version, $]
-      if $] < $min_version;
+# remove data more recent than the perl we're running
+# (makes it easier to run with any perl, even if we
+# only really care
+for my $feature ( keys %feature ) {
+    exists $feature{$feature}{$_} && $feature{$feature}{$_} > $]
+      and delete $feature{$feature}{$_}
+      for qw( known enabled disabled );
+    delete $feature{$feature}
+      if join( '', keys %{ $feature{$feature} } ) =~ /\A(?:compat)?\z/;
 }
 
 # complete the %features data structure
