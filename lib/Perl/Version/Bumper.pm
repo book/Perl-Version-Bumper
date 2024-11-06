@@ -699,7 +699,7 @@ sub bump_file_safely {
 
 Perl::Version::Bumper - Update C<use VERSION> on any Perl code
 
-=head1 SYNOPSSIS
+=head1 SYNOPSIS
 
     use Perl::Version::Bumper;
 
@@ -727,14 +727,14 @@ It takes care of removing unnecessary loading of L<feature> and
 L<experimental> L<warnings>, and adds the C<use VERSION> line at the
 top of the file (thus encouraging "line 1 semantics").
 
-It also manages the removal of "compat" modules when the feature they
-provide a compatibility layer with is fully supported in the target
+It also manages the removal of "compatibility" modules when the feature
+they provide a compatibility layer with is fully supported in the target
 Perl version.
 
 If the code already declares a Perl version, it can only be bumped
 to a higher version.
 
-The module L<exports|/EXPORTS> a few helper functions, which are mostly used
+The module L<exports|/EXPORTS> a few helper functions. These are mostly used
 by support tools for this distribution. They are not meant for general use.
 
 =head1 CONSTRUCTOR
@@ -750,13 +750,14 @@ Return a new C<Perl::Version::Bumper> object.
 
 =head2 version
 
-The target version to bump to (in the C<v5.xx> format).
+The target version to bump to.
 
 Defaults to the stable version less than or equal to the version of the
 currenly running C<perl>.
 
 The constructor accepts both forms of Perl versions, regular
-(e.g. C<v5.36>) and floating-point (e.g. C<5.036>).
+(e.g. C<v5.36>) and floating-point (e.g. C<5.036>), and will
+turn it into a string suitable for C<use VERSION>.
 
 To protect against simple mistakes (e.g. passing C<5.36> instead of
 C<v5.36>), the constructor does some sanity checking, and checks that
@@ -778,21 +779,21 @@ is a stable Perl version.
 
 =back
 
-The constructor will also drops any version information after the minor
-version (so C<v5.36.2> will be turned into C<v5.36>).
+The constructor will also drops any sub-version information (so C<v5.36.2>
+will be turned into C<v5.36>).
 
 =head1 CLASS METHODS
 
 =head2 feature_version
 
-Return the version (in the C<v5.xx> format) of the feature set recognized
+Return the version (in numeric format) of the feature set recognized
 by this module. It is not possible to bump code over that version.
 
 =head1 METHODS
 
 =head2 version_num
 
-Return the L</version> value as a floating-point number.
+Return the L</version> value as a number.
 
 =head2 bump_ppi
 
@@ -831,7 +832,8 @@ version number the file was bumped to in case of success.
 
 =head1 EXPORTS
 
-The following I<functions> can be optionally exported:
+The following I<functions> can be optionally exported. Be aware that they
+are mostly meant for internal use of the module and helper scripts.
 
 =head2 version_fmt
 
