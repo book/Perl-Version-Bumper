@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-use v5.32;
+use v5.10;
+use strict;
 use warnings;
 
 use Path::Tiny;
@@ -37,15 +38,17 @@ die "$version is not a stable Perl version\n"
 # (the information that can't be computed is pre-filled)
 my %feature = (
     say => {
-        compat => {
+        known   => 5.010,
+        enabled => 5.010,
+        compat  => {
             'Perl6::Say'  => 1,    # import only
             'Say::Compat' => 1,    # import only
         }
     },
+    state           => { known => 5.010, enabled => 5.010 },
+    switch          => { known => 5.010, enabled => 5.010 },
+    unicode_strings => { known => 5.012, enabled => 5.012 },
 
-    # state
-    # switch
-    # unicode_strings
     # unicode_eval
     # evalbytes
     # current_sub
@@ -139,13 +142,13 @@ for my $feature ( keys %feature ) {
 
 # build the tabular data
 my $feature_data = join '',
-  map s/ +\Z//r,    # trim whitespace added by sprintf
+  map { s/ +\Z//; $_ }    # trim whitespace added by sprintf
   map sprintf( "%26s %-8s %-8s %-8s %s\n", @$_ ),
   [ "$version features", qw( known enabled disabled compat ) ],
   map [
     $_,                                       # feature name
     map ( $_ ? sprintf "  %5.3f", $_ : '',    # version numbers
-        $feature{$_}->@{qw( known enabled disabled)} ),
+        @{ $feature{$_} }{qw( known enabled disabled)} ),
     do {                                      # compat modules
         my $feature = $_;
         join ' ', map +( $_ => $feature{$feature}{compat}{$_} ),
