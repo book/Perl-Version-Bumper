@@ -9,20 +9,17 @@ use Perl::Version::Bumper;
 use lib path(__FILE__)->parent->child('lib')->stringify;
 use TestFunctions;
 
-# cache PPI parsing results
-my %ppi;
-
 test_dir(
     dir      => 'bump',
     stop_at  => Perl::Version::Bumper->feature_version,
     callback => sub {
-        my ( $perv, $src, $expected, $name ) = @_;
+        my ( $perv, $src, $expected, $name, $ctx ) = @_;
         my $version = $perv->version;
         my $this    = qq{"$name" [$version]};
         $expected =~ s/use v5\.XX;/use $version;/g;
 
         # bump_ppi
-        my $doc = $ppi{$src} //= do {    # cache the PPI document
+        my $doc = $ctx->{$src} //= do {    # cache the PPI document
             my $ppi = PPI::Document->new( \$src );
             is( $ppi, D, "'$name' parsed by PPI" );
             $ppi;
