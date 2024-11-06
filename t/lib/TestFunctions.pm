@@ -27,6 +27,8 @@ sub test_file {
 
     subtest $file => sub {
 
+        my $ctx = {};    # a context kept for the entire file
+
         while ( my ( $name, $data ) = splice @tests, 0, 2 ) {
 
             # sections starting at a given version number up to the next one
@@ -59,7 +61,7 @@ sub test_file {
 
                 $args{callback}->(
                     Perl::Version::Bumper->new( version => $version ),
-                    $src, $expected, $name
+                    $src, $expected, $name, $ctx
                 );
             }
 
