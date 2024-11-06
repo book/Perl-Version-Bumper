@@ -33,8 +33,8 @@ test_dir(
         my $file = Path::Tiny->tempfile;
         $file->spew($src);
         my $ran = $perv->bump_file($file);
-        if ( $src eq $expected ) { is( $ran, U, "$this ->bump_file (same)" ); }
-        else                     { is( $ran, D, "$this ->bump_file (mod')" ); }
+        if ( $src eq $expected ) { is( $ran, !!0, "$this ->bump_file (same)" ); }
+        else                     { is( $ran, !!1, "$this ->bump_file (mod')" ); }
         is( $file->slurp, $expected, "$this ->bump_file (expected update)" );
     },
 );

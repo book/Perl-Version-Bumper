@@ -656,7 +656,7 @@ sub bump_file {
         $file->spew($bumped);
         return !!1;
     }
-    return;
+    return !!0;
 }
 
 sub bump_file_safely {
@@ -812,6 +812,8 @@ and return the new source code as a string.
     $perv->bump_file( $filename );
 
 Bump the code of the file argument in-place.
+
+Return a boolean indicating if the file content was modified or not.
 
 =head2 bump_file_safely
 
