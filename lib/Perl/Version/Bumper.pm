@@ -641,16 +641,15 @@ sub bump_ppi {
 }
 
 sub bump {
-    my ( $self, $code ) = @_;
-    my $doc = PPI::Document->new( \$code );
+    my ( $self, $code, $filename ) = @_;
+    my $doc = PPI::Document->new( \$code, filename => $filename );
     croak "Parsing failed" unless defined $doc;
     return $self->bump_ppi($doc)->serialize;
 }
 
 sub bump_file {
     my ( $self, $file ) = @_;
-    $file = Path::Tiny->new($file);
-    my $code   = $file->slurp;
+    my $code   = Path::Tiny->new($file)->slurp;
     my $bumped = $self->bump( $code, $file );
     if ( $bumped ne $code ) {
         $file->spew($bumped);
