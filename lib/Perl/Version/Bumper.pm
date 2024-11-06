@@ -538,6 +538,7 @@ sub _insert_version_stmt {
     my $version_stmt =
       PPI::Document->new( \sprintf "use %s;\n", $self->version );
     my $insert_point = $doc->schild(0) // $doc->child(0);
+    return unless defined $insert_point;    # empty document
 
     # insert before the next significant sibling
     # if the first element is a use VERSION
@@ -641,11 +642,8 @@ sub bump_ppi {
 
 sub bump {
     my ( $self, $code ) = @_;
-    return $code unless length $code;    # don't touch the empty string
-
     my $doc = PPI::Document->new( \$code );
     croak "Parsing failed" unless defined $doc;
-
     return $self->bump_ppi($doc)->serialize;
 }
 
