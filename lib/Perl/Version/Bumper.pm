@@ -564,7 +564,7 @@ sub _insert_version_stmt {
     _cleanup_bundled_features( $self, $doc, $old_num );
 }
 
-sub _try_compile {
+sub _try_compile_file {
     my ( $file ) = @_;
 
     # redirect STDERR for quietness
@@ -597,7 +597,7 @@ sub _try_bump_ppi_safely {
         $tmp->spew( $perv->bump_ppi($doc)->serialize );
 
         # try to compile the file
-        last if _try_compile( $tmp );
+        last if _try_compile_file( $tmp );
 
         # bump version down and repeat
         $version = stable_version_dec($version);
@@ -672,7 +672,7 @@ sub bump_file_safely {
     };
 
     # try compiling the file: if it fails, our safeguard won't work
-    unless ( _try_compile($file) ) {
+    unless ( _try_compile_file($file) ) {
         warn "Can't bump Perl version safely for $file: it does not compile\n";
         return;    # return undef
     }
