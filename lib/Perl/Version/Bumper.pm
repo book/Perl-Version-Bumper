@@ -17,13 +17,12 @@ while (<DATA>) {
         $feature_version = version_fmt($1);
         next;
     }
-    no warnings;    # substr outside of string
-    my $feature  = substr $_, 0, my $pos = 27;         # %26s
-    my $known    = substr $_, $pos, 8;                 # %-8s
-    my $enabled  = substr $_, $pos += 9, 8;            # %-8s
-    my $disabled = substr $_, $pos += 9, 8;            # %-8s
-    my @compat   = split ' ', substr $_, $pos += 9;    # %s
-    y/ //d for grep defined, $feature, $known, $enabled, $disabled;
+    my $feature  = substr $_, 0, 27, '';    # %26s
+    my $known    = substr $_, 0, 9,  '';    # %-8s
+    my $enabled  = substr $_, 0, 9,  '';    # %-8s
+    my $disabled = substr $_, 0, 9,  '';    # %-8s
+    my @compat = split ' ';                 # %s
+    y/ //d for $feature, $known, $enabled, $disabled;
     $feature{$feature}{known}    = $known;
     $feature{$feature}{enabled}  = $enabled  if $enabled;
     $feature{$feature}{disabled} = $disabled if $disabled;
