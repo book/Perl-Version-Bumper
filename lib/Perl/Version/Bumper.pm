@@ -203,7 +203,7 @@ sub _ppi_list_to_perl_list {
         }
         elsif ($token->isa('PPI::Token::Word')                     # undef
             && $token eq 'undef'
-            && ( $tokens[0] ? $tokens[0] ne '=>' : 1 ) )
+            && ( $tokens[0] ? $tokens[0] ne '=>' : !!1 ) )
         {
             push @$ptr, undef;
         }
@@ -215,7 +215,7 @@ sub _ppi_list_to_perl_list {
             push @$ptr,
 
               # maybe a known constant?
-                exists $constants->{$token} && ( $next_sibling ? $next_sibling ne '=>' : 1 )
+                exists $constants->{$token} && ( $next_sibling ? $next_sibling ne '=>' : !!1 )
                                         ? $constants->{$token}
 
               # various types of strings
@@ -281,7 +281,7 @@ sub _drop_bare {
     my $use_module = $doc->find(
         sub {
             my ( $root, $elem ) = @_;
-            return 1
+            return !!1
               if $elem->isa('PPI::Statement::Include')
               && $elem->module eq $module
               && $elem->type eq $type
@@ -300,10 +300,10 @@ sub _find_include {
     my $found = $doc->find(
         sub {
             my ( $root, $elem ) = @_;
-            return 1
+            return !!1
               if $elem->isa('PPI::Statement::Include')
               && $elem->module eq $module;
-            return '';
+            return !!0;
         }
     );
     croak "Bad condition for PPI::Node->find"
@@ -317,8 +317,8 @@ sub _version_stmts {
     my $version_stmts = $doc->find(
         sub {
             my ( $root, $elem ) = @_;
-            return 1 if $elem->isa('PPI::Statement::Include') && $elem->version;
-            return '';
+            return !!1 if $elem->isa('PPI::Statement::Include') && $elem->version;
+            return !!0;
         }
     );
     croak "Bad condition for PPI::Node->find"
@@ -628,7 +628,7 @@ sub bump_ppi {
             my $old_num = version::->parse( $use_v->version )->numify;
             if ( $old_num <= $self->version_num ) {
                 _insert_version_stmt( $self, $doc, $old_num );
-                _drop_statement( $use_v, 1 );
+                _drop_statement( $use_v, !!1 );
             }
         }
     }
