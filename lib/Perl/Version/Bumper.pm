@@ -634,7 +634,9 @@ sub bump_file {
     return !!0;
 }
 
-sub bump_ppi_safely {
+# this one is private and returns an array ref with two values:
+# the new PPI::Document, and the version it was actually bumped to
+sub _bump_ppi_safely {
     my ( $self, $doc, $version_limit ) = @_;
     $version_limit &&= stable_version($version_limit);
     $version_limit //= do {
@@ -649,30 +651,33 @@ sub bump_ppi_safely {
     $tmp->spew( $doc->serialize );
     unless ( _try_compile_file($tmp) ) {
         warn "Can't bump Perl version safely for $source: it does not compile\n";
-        return ( $doc->clone, undef );    # undef means "didn't compile"
+        return [ $doc->clone, undef ];    # undef means "didn't compile"
     }
 
     # try bumping down version until it compiles
-    my $bumped;
+    my $bumped_doc;
     my $version = $self->version_num;
     while ( $version >= $version_limit or $version = !!0 ) {
         my $perv = $self->version_num eq $version
           ? $self    # no need to create a new object
           : Perl::Version::Bumper->new( version => $version );
-        $bumped = $perv->bump_ppi($doc)->serialize;
+        $bumped_doc = $perv->bump_ppi($doc);
 
         # try to compile the file
         $tmp = Path::Tiny->tempfile;
-        $tmp->spew($bumped);
+        $tmp->spew( $bumped_doc->serialize );
         last if _try_compile_file($tmp);
 
         # bump version down and repeat
         $version = stable_version_dec($version);
     }
 
-    return wantarray
-      ? $version ? ( $bumped, $version ) : ( $doc->clone, $version )
-      : $version ?   $bumped             :   $doc->clone;
+    return $version ? [ $bumped_doc, $version ] : [ $doc->clone, $version ];
+}
+
+sub bump_ppi_safely {
+    my ( $self, $doc, $version_limit ) = @_;
+    return $self->_bump_ppi_safely( $doc, $version_limit )->[0];
 }
 
 sub bump_safely {
@@ -680,15 +685,16 @@ sub bump_safely {
     my $doc = PPI::Document->new( \$code,
         filename => $filename ? "$filename" : 'input code' );
     croak "Parsing failed" unless defined $doc;
-    return $self->bump_ppi_safely( $doc, $version_limit );
+    return $self->_bump_ppi_safely( $doc, $version_limit )->[0]->serialize;
 }
 
 sub bump_file_safely {
     my ( $self, $file, $version_limit ) = @_;
-    $file = Path::Tiny->new($file);
-    my $code = $file->slurp;
-    my ( $bumped, $version ) = $self->bump_safely( $code, $version_limit, $file );
-    $file->spew($bumped);
+    my $doc = PPI::Document->new("$file");    # stringify any object
+    croak "Parsing failed" unless defined $doc;
+    my ( $bumped_doc, $version ) =
+      @{ $self->_bump_ppi_safely( $doc, $version_limit ) };
+    Path::Tiny->new($file)->spew( $bumped_doc->serialize ) if $version;
     return $version;
 }
 
@@ -864,9 +870,6 @@ before it can I<safely> be bumped past version C<v5.34>.
 
     my $bumped_ppi_doc = $perv->bump_ppi_safely( $ppi_doc, $version_limit );
 
-    my ( $bumped_ppi_doc, $new_version ) =
-      $perv->bump_ppi_safely( $ppi_doc, $version_limit );
-
 Take a L<PPI::Document> as input, and try to compile its content.
 If the compilation fails, return immediately.
 
@@ -879,15 +882,9 @@ the target version, all the way back to the currently declared version
 in the document, or C<$version_limit>, whichever is more recent. Give up
 after the last compilation failure.
 
-In scalar context, return a L<PPI::Document> containing the result of the
-"safe bump". In list context, return a L<PPI::Document> and an additional
-scalar. That scalar is C<undef> if the original didn't compile, false
-(empty string) if all attempts to bump the file failed, and the actual
-version number the content was bumped to in case of success.
-
-The scalar is C<undef> if the original does not compile with
-the current C<perl>, the empty string if the content was not modified,
-and the Perl version number the code was bumped to if it was modified.
+The return value is a new L<PPI::Document> containing the result of the
+"safe bump" (its content might be the same as the original if there's
+no safe way to bump the code).
 
 C<$version_limit> is optional, and defaults to C<v5.10>.
 
@@ -903,11 +900,12 @@ and return the new source code as a string.
 
     $perv->bump_file_safely( $filename, $version_limit );
 
-Safely bump the code of the file argument in-place.
+Safely bump the code of the file argument in-place. The file will
+not be modified if the code can't be bumped safely.
 
-The return value is C<undef> if the original didn't compile, false
-(empty string) if all attempts to bump the file failed, and the actual
-version number the file was bumped to in case of success.
+The return value is C<undef> if the original didn't compile, false if
+all attempts to bump the file failed, and the actual version number the
+file was bumped to in case of success.
 
 =head1 EXPORTS
 
