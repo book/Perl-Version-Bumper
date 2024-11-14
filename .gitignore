@@ -1,0 +1,8 @@
+.build
+Perl-Version-Bumper-*
+*.tar.gz
+cover_db
+*.bak
+*.swp
+*~
+mess
