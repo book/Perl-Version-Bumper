@@ -712,23 +712,25 @@ Perl::Version::Bumper - Update C<use VERSION> on any Perl code
 
     my $perv = Perl::Version::Bumper->new( version => 'v5.36' );
 
-    # bump a PPI::Document (and get source code)
-    my $new_code = $perv->bump_ppi( $ppi_doc );
+    # bump a PPI::Document
+    my $bumped_ppi = $perv->bump_ppi($ppi_doc);
 
     # bump source code
-    my $new_code = $perv->bump( $old_code );
+    my $bumped_code = $perv->bump($code);
 
     # bump the source of a file
-    $perv->bump_file( $filename );
+    $perv->bump_file($filename);
 
-    # bump the source of a file (and double check it compiles)
+    # safe versions (check the result compiles)
+
+    my $bumped_ppi  = $perv->bump_ppi_safely($ppi_doc);
+    my $bumped_code = $perv->bump_safely($code);
     $perv->bump_file_safely( $filename, $version_limit );
 
 =head1 DESCRIPTION
 
-C<Perl::Version::Bumper> can update a piece of Perl code to
-make it declare it uses a more recent version of the Perl language by
-way of C<use VERSION>.
+C<Perl::Version::Bumper> can update Perl code to make it declare it uses
+a more recent version of the Perl language by way of C<use VERSION>.
 
 It takes care of removing unnecessary loading of L<feature> and
 L<experimental> L<warnings>, and adds the C<use VERSION> line at the
@@ -742,14 +744,14 @@ If the code already declares a Perl version, it can only be bumped
 to a higher version.
 
 The module L<exports|/EXPORTS> a few helper functions. These are mostly used
-by support tools for this distribution. They are not meant for general use.
+by support tools for this distribution, and are not meant for general use.
 
 =head1 CONSTRUCTOR
 
 =head2 new
 
-    my $prev = Perl::Version::Bumper->new( %attributes );
-    my $prev = Perl::Version::Bumper->new( \%attributes );
+    my $perv = Perl::Version::Bumper->new( %attributes );
+    my $perv = Perl::Version::Bumper->new( \%attributes );
 
 Return a new C<Perl::Version::Bumper> object.
 
@@ -796,29 +798,32 @@ will be turned into C<v5.36>).
 Return the version (in numeric format) of the feature set recognized
 by this module. It is not possible to bump code over that version.
 
+The current value of C<feature_version> is: C<5.040>.
+
 =head1 METHODS
 
 =head2 version_num
 
-Return the L</version> value as a number.
+Return the L</version> attribute as a number.
 
 =head2 bump_ppi
 
-    my $bumped_ppi_doc = $perv->bump_ppi( $ppi_doc );
+    my $bumped_ppi_doc = $perv->bump_ppi($ppi_doc);
 
-Take a L<PPI::Document> as input, and return a new L<PPI::Document>
+Take a L<PPI::Document> as input, and return a I<new> L<PPI::Document>
 with its declared version bumped to L</version>.
 
 =head2 bump
 
-    my $bumped_code = $perv->bump( $code );
+    my $bumped_code = $perv->bump($code);
 
-Bump the declared Perl version in the source code to L</version>,
-and return the new source code as a string.
+Take a string containing Perl code as input, bump the declared Perl
+version in the source code to L</version>, and return the new source
+code as a string.
 
 =head2 bump_file
 
-    $perv->bump_file( $filename );
+    $perv->bump_file($filename);
 
 Bump the code of the file argument in-place.
 
@@ -827,11 +832,12 @@ Return a boolean indicating if the file content was modified or not.
 =head1 SAFE METHODS
 
 The L</bump_ppi>, L</bump> and L</bump_file> methods previously described
-modify the source code they're given, but there's no garanty that the
+modify the source code they're given, but give I<no garanties> that the
 updated code will even compile.
 
-The corresponding L</bump_ppi_safely>, L</bump>_safely and
-L</bump_file>_safely methods will only return code that compiles.
+To address this issue, L</bump_ppi_safely>, L</bump_safely> and
+L</bump_file_safely> methods work as the regular methods, but will only
+produce code that actually compiles.
 
 =head2 Example of a safe bump
 
@@ -848,11 +854,12 @@ Which fails to compile with the following error:
 
     Multidimensional hash lookup is disabled
 
-It's not possible to just bump this code up to C<v5.40> and expect it
-to work, because it used multidimensional array emulation, and the
-corresponding C<multidimensional> feature was disabled in C<v5.36>
-(this is the cause for the error). This will in fact fail for all
-versions greater or equal to C<v5.36>.
+It's not possible to just bump this code up to C<v5.40> and expect it to
+work, because it uses multidimensional array emulation, and the feature
+that represents this (C<multidimensional>) was disabled in C<v5.36>.
+The actual cause for the error is that Perl v5.36 doesn't support
+multidimensional array emulation. This code will in fact fail to compile
+with all versions greater or equal to C<v5.36>.
 
 A I<safe way> to try to bump this code to C<v5.40> is to try with
 C<v5.40>, detect it fails to compile, try again with C<v5.38> and
@@ -868,7 +875,7 @@ before it can I<safely> be bumped past version C<v5.34>.
 
 =head2 bump_ppi_safely
 
-    my $bumped_ppi_doc = $perv->bump_ppi_safely( $ppi_doc, $version_limit );
+    my $bumped_ppi = $perv->bump_ppi_safely( $ppi_doc, $version_limit );
 
 Take a L<PPI::Document> as input, and try to compile its content.
 If the compilation fails, return immediately.
@@ -893,8 +900,8 @@ C<$version_limit> is optional, and defaults to C<v5.10>.
     my $bumped_code = $perv->bump_safely($code, $version_limit);
     my ( $bumped_code, $new_version ) = $perv->bump_safely($code);
 
-Safely bump the declared Perl version in the source code to L</version>,
-and return the new source code as a string.
+Safely bump the declared Perl version in the given source code to
+L</version>, and return the new source code as a string.
 
 =head2 bump_file_safely
 
@@ -903,9 +910,9 @@ and return the new source code as a string.
 Safely bump the code of the file argument in-place. The file will
 not be modified if the code can't be bumped safely.
 
-The return value is C<undef> if the original didn't compile, false if
-all attempts to bump the file failed, and the actual version number the
-file was bumped to in case of success.
+The return value is C<undef> if the original didn't compile, false
+if all attempts to bump the file failed, and the actual (numerical)
+version number the file was bumped to in case of success.
 
 =head1 EXPORTS
 
@@ -974,7 +981,7 @@ under the same terms as Perl itself.
 
 # The following data is used to generate the %feature hash.
 #
-# It is generated using the bin/build_feature_data.pl scrit
+# It is generated using the bin/build_feature_data.pl script
 # shipped with the distribution.
 #
 # The keys are:
@@ -1005,7 +1012,6 @@ under the same terms as Perl itself.
 # compatibility features. The number following the module name in the
 # data structure below is the sum of 1 (if the module has an `import`
 # method) and -1 (if the module has an `unimport` method).
-#
 
 __DATA__
             5.040 features known    enabled  disabled compat
