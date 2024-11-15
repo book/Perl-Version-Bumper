@@ -1,5 +1,8 @@
-package Perl::Version::Bumper;
 use v5.10;
+
+package Perl::Version::Bumper;
+
+
 use strict;
 use warnings;
 
