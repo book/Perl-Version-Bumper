@@ -119,14 +119,13 @@ any failure will be marked as TODO.
 From <version 3> up to the version of the running perl (included),
 the test expects the result to be equal to <expected result 3>.
 
-Tests stop as soon as the version of the running perl is reached,
-meaning that running the tests with an older perl might not test all
-possible cases.
+Tests stop as soon as the highest version supported by the module is
+reached.
 
 IMPORTANT: This implies the version numbers must be in increasing order.
 
 To simplify writing the expected results, every "use v5.XX" will have the
-"XX" replaced with the minor Perl version being tested.
+"v5.XX" replaced with the Perl version being tested.
 
 The first "---" line can be empty, in which case the version is assumed
 to be v5.10.
