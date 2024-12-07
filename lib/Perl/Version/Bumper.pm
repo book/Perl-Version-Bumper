@@ -627,7 +627,8 @@ sub bump_ppi {
 sub bump {
     my ( $self, $code, $filename ) = @_;
     my $doc = PPI::Document->new( \$code, filename => $filename );
-    croak "Parsing failed" unless defined $doc;
+    $filename //= 'input code';
+    croak "Parsing of $filename failed" unless defined $doc;
     return $self->bump_ppi($doc)->serialize;
 }
 
@@ -693,14 +694,14 @@ sub bump_safely {
     my ( $self, $code, $options ) = @_;
     my $filename = $options->{filename} // 'input code';
     my $doc      = PPI::Document->new( \$code, filename => $filename );
-    croak "Parsing failed" unless defined $doc;
+    croak "Parsing of $filename failed" unless defined $doc;
     return $self->_bump_ppi_safely( $doc, $options )->[0]->serialize;
 }
 
 sub bump_file_safely {
     my ( $self, $file, $options ) = @_;
     my $doc = PPI::Document->new("$file");    # stringify any object
-    croak "Parsing failed" unless defined $doc;
+    croak "Parsing of $file failed" unless defined $doc;
     my ( $bumped_doc, $version ) =
       @{ $self->_bump_ppi_safely( $doc, $options ) };
     Path::Tiny->new($file)->spew( $bumped_doc->serialize ) if $version;
