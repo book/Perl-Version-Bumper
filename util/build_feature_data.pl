@@ -88,7 +88,10 @@ my %feature = (
     defer                   => { known => 5.036 },
     extra_paired_delimiters => { known => 5.036 },
     module_true             => { known => 5.038 },
-    class                   => { known => 5.038 },
+    class                   => {
+        known  => 5.038,
+        compat => { 'Feature::Compat::Class' => 1 },    # import
+    },
 );
 
 # complete the %features data structure

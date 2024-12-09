@@ -1075,5 +1075,5 @@ __DATA__
                        try   5.034    5.040           Syntax::Feature::Try 0 Syntax::Keyword::Try 0
                      defer   5.036
    extra_paired_delimiters   5.036
-                     class   5.038
+                     class   5.038                    Feature::Compat::Class 1
                module_true   5.038    5.038
