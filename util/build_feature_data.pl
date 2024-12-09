@@ -81,6 +81,7 @@ my %feature = (
     try => {
         known  => 5.034,
         compat => {
+            'Feature::Compat::Try' => 1,                # import
             'Syntax::Keyword::Try' => 0,                # import / unimport
             'Syntax::Feature::Try' => 0,                # import / unimport
         },
