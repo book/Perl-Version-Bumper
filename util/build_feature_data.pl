@@ -86,7 +86,13 @@ my %feature = (
             'Syntax::Feature::Try' => 0,                # import / unimport
         },
     },
-    defer                   => { known => 5.036 },
+    defer => {
+        known  => 5.036,
+        compat => {
+            'Feature::Compat::Defer' => 1,              # import
+            'Syntax::Keyword::Defer' => 0,              # import / unimport
+        },
+    },
     extra_paired_delimiters => { known => 5.036 },
     module_true             => { known => 5.038 },
     class                   => {

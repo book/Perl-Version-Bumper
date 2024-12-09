@@ -1073,7 +1073,7 @@ __DATA__
       bareword_filehandles   5.034    5.010    5.038  bareword::filehandles 0
           multidimensional   5.034    5.010    5.036  multidimensional 0
                        try   5.034    5.040           Feature::Compat::Try 1 Syntax::Feature::Try 0 Syntax::Keyword::Try 0
-                     defer   5.036
+                     defer   5.036                    Feature::Compat::Defer 1 Syntax::Keyword::Defer 0
    extra_paired_delimiters   5.036
                      class   5.038                    Feature::Compat::Class 1
                module_true   5.038    5.038
