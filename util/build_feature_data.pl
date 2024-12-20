@@ -34,7 +34,7 @@ die "$version is not a stable Perl version\n"
 # - disabled: when the feature was first disabled
 # - compat:   replacement modules for features to be deprecated / added
 
-# features are listed in the order of the perlfeature manual page
+# features are listed in the order of the feature manual page
 # (the information that can't be computed is pre-filled)
 my %feature = (
     say => {

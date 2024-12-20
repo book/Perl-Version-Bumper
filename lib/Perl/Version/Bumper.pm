@@ -358,8 +358,8 @@ my %feature_shine = (
 
 # IMPORTANT: Please double-check the use of bitwise operators
 # before removing the `no feature 'bitwise';` line below.
-# See manual pages perlfeature (section "The 'bitwise' feature")
-# and perlop (section "Bitwise String Operators") for details.
+# See manual pages 'feature' (section "The 'bitwise' feature")
+# and 'perlop' (section "Bitwise String Operators") for details.
 TODO_COMMENT
         $insert_point->insert_before( $_->remove ) for $todo_comment->elements;
     },
