@@ -549,13 +549,8 @@ sub _insert_version_stmt {
       && $insert_point->version
       && $insert_point->snext_sibling;
 
-    # because of Perl::Critic::Policy::Modules::RequireExplicitPackage
-    # we have to put the use VERSION line after the package line,
-    # if that's the first significant thing in the document
-    if ( $insert_point->isa('PPI::Statement::Package') ) {
-        $insert_point->insert_after( $_->remove ) for $version_stmt->elements;
-    }
-    elsif ( $insert_point->significant ) {
+    # put the use VERSION LINE at the top of the file
+    if ( $insert_point->significant ) {
         $insert_point->insert_before( $_->remove ) for $version_stmt->elements;
     }
     else {
