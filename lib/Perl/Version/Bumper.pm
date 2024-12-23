@@ -542,16 +542,19 @@ sub _insert_version_stmt {
     my $insert_point = $doc->schild(0) // $doc->child(0);
     return unless defined $insert_point;    # empty document
 
-    # insert before the next significant sibling
-    # if the first element is a use VERSION
-    $insert_point = $insert_point->snext_sibling
-      if $insert_point->isa('PPI::Statement::Include')
-      && $insert_point->version
-      && $insert_point->snext_sibling;
+    # record the indent before the next significant sibling
+    # (unless it's a version statement: it will be removed,
+    # and this version statement will replace it)
+    my $indent;
+    $indent = $insert_point->previous_sibling
+      if $insert_point->previous_sibling
+      && $insert_point->previous_sibling->isa('PPI::Token::Whitespace')
+      && !($insert_point->isa('PPI::Statement::Include') && $insert_point->version );
 
     # put the use VERSION LINE at the top of the file
     if ( $insert_point->significant ) {
         $insert_point->insert_before( $_->remove ) for $version_stmt->elements;
+        $insert_point->insert_before( $indent->clone ) if $indent;
     }
     else {
         $doc->add_element( $_->remove ) for $version_stmt->elements;
