@@ -757,6 +757,10 @@ Perl version.
 If the code already declares a Perl version, it can only be bumped
 to a higher version.
 
+For more information about why you would want to use this module
+(or the associated program L<perl-version-bump>), please check
+L<Perl::Version::Bumper::Rationale>.
+
 The module L<exports|/EXPORTS> a few helper functions. These are mostly used
 by support tools for this distribution, and are not meant for general use.
 
