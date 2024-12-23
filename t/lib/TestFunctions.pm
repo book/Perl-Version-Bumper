@@ -5,6 +5,7 @@ use Test2::V0;
 use Path::Tiny;
 use Perl::Version::Bumper qw(
   version_fmt
+  stable_version
   stable_version_inc
 );
 
@@ -110,10 +111,11 @@ sub test_dir {
 }
 
 sub test_file {
-    my %args     = @_;
-    my $file     = $args{file};
-    my $callback = $callback{ $args{callback} };
-    my $stop_at  = stable_version_inc( $args{stop_at}
+    my %args       = @_;
+    my $file       = $args{file};
+    my $callback   = $callback{ $args{callback} };
+    my $start_from = stable_version( $args{start_from} // 5.010 );
+    my $stop_at    = stable_version_inc( $args{stop_at}
           // Perl::Version::Bumper->feature_version );
     die "Unknown test callback '$args{callback}'" unless $callback;
 
@@ -145,7 +147,7 @@ sub test_file {
               : $stop_at;    # no "expected" section (the empty case)
 
             my $todo;    # not a todo test by default
-            my $version = 5.010;    # always start at v5.10
+            my $version = $start_from;
             while ( $version < $stop_at ) {
                 if ( $version >= $next_version ) {
                     ( my $version_todo, $expected ) = splice @expected, 0, 2;
