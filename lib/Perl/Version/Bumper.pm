@@ -131,7 +131,7 @@ sub new {
     ;
 
     # handle the version attribute
-    my $version_arg = $args->{version} // $];
+    my $version_arg = $args->{version} // stable_version($]);
     my $version_num = version_fmt( $version_arg );
     croak "Unsupported Perl version: $version_arg (greater than $feature_version)"
       if $version_num > $feature_version;
