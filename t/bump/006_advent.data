@@ -40,6 +40,21 @@
     use VERSION;
     sub greeting :prototype( $ ) { sprintf "Hello, %s!", shift }
     say greeting "world";
+########## disable problematic features
+    use v5.10;
+    say "hello, world!" | "@";    # flip the capital bit on the first letter
+---
+    use VERSION;
+    say "hello, world!" | "@";    # flip the capital bit on the first letter
+--- v5.28
+    use VERSION;
+
+    # IMPORTANT: Please double-check the use of bitwise operators
+    # before removing the `no feature 'bitwise';` line below.
+    # See manual pages 'feature' (section "The 'bitwise' feature")
+    # and 'perlop' (section "Bitwise String Operators") for details.
+    no feature 'bitwise';
+    say "hello, world!" | "@";    # flip the capital bit on the first letter
 ########## safe mode (but unsafe)
     open FH, 'greeting.txt' or die "Can't open file: $!";
     print FH "Hello, world!\n";

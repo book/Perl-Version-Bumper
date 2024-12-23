@@ -344,8 +344,12 @@ my %feature_shine = (
             }
         );
 
-        # the `use VERSION` inserted earlier is always the last one in the doc
-        my $insert_point = ( _version_stmts($doc) )[-1];
+        # the `use VERSION` inserted earlier is always the first one in the doc
+        my $insert_point = ( _version_stmts($doc) )[0];
+        my $indent = $insert_point->previous_sibling
+          && $insert_point->previous_sibling->isa('PPI::Token::Whitespace')
+          ? $insert_point->previous_sibling
+          : '';
         my $no_feature_bitwise =
           PPI::Document->new( \"no feature 'bitwise';\n" );
         $insert_point->insert_after( $_->remove )
@@ -354,14 +358,15 @@ my %feature_shine = (
         # also add an IMPORTANT comment to warn users
         $insert_point = $insert_point->snext_sibling;
         my $todo_comment =
-          PPI::Document->new( \( << 'TODO_COMMENT' ) );
+          PPI::Document->new( \( << "TODO_COMMENT" ) );
 
-# IMPORTANT: Please double-check the use of bitwise operators
-# before removing the `no feature 'bitwise';` line below.
-# See manual pages 'feature' (section "The 'bitwise' feature")
-# and 'perlop' (section "Bitwise String Operators") for details.
+$indent# IMPORTANT: Please double-check the use of bitwise operators
+$indent# before removing the `no feature 'bitwise';` line below.
+$indent# See manual pages 'feature' (section "The 'bitwise' feature")
+$indent# and 'perlop' (section "Bitwise String Operators") for details.
 TODO_COMMENT
         $insert_point->insert_before( $_->remove ) for $todo_comment->elements;
+        $insert_point->insert_before( $indent->clone ) if $indent;
     },
 
     # the 'signatures' feature needs prototypes to be updated.
