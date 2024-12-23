@@ -5,6 +5,7 @@ package Perl::Version::Bumper;
 
 use strict;
 use warnings;
+use version;
 
 use Path::Tiny;
 use PPI::Document;
