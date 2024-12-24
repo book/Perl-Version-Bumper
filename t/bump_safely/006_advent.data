@@ -22,7 +22,7 @@
 
     sub greeting ( $who ) { "Hello, $who!" }
     say greeting "world";
-########## rewrite prototyp
+########## rewrite prototype
     use v5.10;
     sub greeting ( $ ) { sprintf "Hello, %s!", shift }
     say greeting "world";
