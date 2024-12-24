@@ -3,7 +3,7 @@
 ---
     use VERSION;
     print "Hello, world!\n";
-########## remove warnings
+########## remove warnings DIE < v5.20
     use v5.20;
     use feature 'signatures';
     no warnings 'experimental::signatures';
