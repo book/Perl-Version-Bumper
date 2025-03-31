@@ -641,7 +641,7 @@ sub bump_file {
     my $code   = Path::Tiny->new($file)->slurp;
     my $bumped = $self->bump( $code, $file );
     if ( $bumped ne $code ) {
-        $file->spew($bumped);
+        $file->append( { truncate => 1 }, $bumped );
         return !!1;
     }
     return !!0;
@@ -708,7 +708,8 @@ sub bump_file_safely {
     croak "Parsing of $file failed" unless defined $doc;
     my ( $bumped_doc, $version ) =
       @{ $self->_bump_ppi_safely( $doc, $options ) };
-    Path::Tiny->new($file)->spew( $bumped_doc->serialize ) if $version;
+    Path::Tiny->new($file)->append( { truncate => 1 }, $bumped_doc->serialize )
+      if $version;
     return $version;
 }
 
