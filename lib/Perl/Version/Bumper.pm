@@ -1056,7 +1056,7 @@ under the same terms as Perl itself.
 # method) and -1 (if the module has an `unimport` method).
 
 __DATA__
-                  5.040 features known    enabled  disabled compat
+                  5.042 features known    enabled  disabled compat
                              say   5.010    5.010           Perl6::Say 1 Say::Compat 1
                            state   5.010    5.010
                           switch   5.010    5.010    5.036
@@ -1082,3 +1082,7 @@ __DATA__
          extra_paired_delimiters   5.036
                            class   5.038                    Feature::Compat::Class 1
                      module_true   5.038    5.038
+ apostrophe_as_package_separator   5.042    5.010    5.042
+                     keyword_all   5.042
+                     keyword_any   5.042
+                      smartmatch   5.042    5.010    5.042
