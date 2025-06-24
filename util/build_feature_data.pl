@@ -153,7 +153,7 @@ for my $feature ( keys %feature ) {
 # build the tabular data
 my $feature_data = join '',
   map { s/ +\Z//; $_ }    # trim whitespace added by sprintf
-  map sprintf( "%26s %-8s %-8s %-8s %s\n", @$_ ),
+  map sprintf( "%32s %-8s %-8s %-8s %s\n", @$_ ),
   [ "$version features", qw( known enabled disabled compat ) ],
   map [
     $_,                                       # feature name
