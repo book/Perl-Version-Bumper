@@ -45,10 +45,10 @@ my %feature = (
             'Say::Compat' => 1,    # import only
         }
     },
-    state           => { known => 5.010, enabled => 5.010 },
-    switch          => { known => 5.010, enabled => 5.010 },
-    unicode_strings => { known => 5.012, enabled => 5.012 },
 
+    # state
+    # switch
+    # unicode_strings
     # unicode_eval
     # evalbytes
     # current_sub
