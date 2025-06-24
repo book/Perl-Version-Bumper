@@ -8,3 +8,11 @@ say fc("\x{17F}");    # s
 --- v5.16
 use VERSION;
 say fc("\x{17F}");    # s
+########## CORE::fc
+print CORE::fc("\x{17F}");    # s
+---
+use VERSION;
+print CORE::fc("\x{17F}");    # s
+--- v5.16
+use VERSION;
+print fc("\x{17F}");    # s
