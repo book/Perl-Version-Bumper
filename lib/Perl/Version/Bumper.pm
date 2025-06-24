@@ -386,6 +386,24 @@ TODO_COMMENT
             $proto->remove;
         }
     },
+
+    # the 'fc' feature means CORE::fc is not required
+    fc => sub {
+        my ($doc) = @_;
+
+        # find all occurences of 'CORE::fc'
+        my $core_fc = $doc->find(
+            sub {
+                my ( $root, $elem ) = @_;
+                return !!1 if $elem->isa('PPI::Token::Word') && $elem eq 'CORE::fc';
+                return !!0;
+            }
+        );
+        return unless $core_fc;
+
+        # and replace them by 'fc'
+        $_->replace( PPI::Token::Word->new('fc') ) for @$core_fc;
+    },
 );
 
 # PRIVATE "METHODS"
