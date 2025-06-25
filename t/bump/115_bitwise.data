@@ -6,9 +6,8 @@ use feature 'bitwise';
 --- v5.28
 use VERSION;
 ########## no feature 'bitwise'
-use v5.28;
 no feature 'bitwise';
---- v5.28
+---
 use VERSION;
 no feature 'bitwise';
 ########## bitwise ops before v5.28
@@ -33,9 +32,6 @@ my $z = $x |. $y;
 --- v5.28
 use VERSION;
 my $z = $x |. $y;
---- v5.36
-use VERSION;
-my $z = $x |. $y;
 ########## bitwise op= before v5.28
 use v5.22;
 my $z |= $x;
@@ -52,11 +48,10 @@ use VERSION;
 no feature 'bitwise';
 my $z |= $x;
 ########## bitwise op= + bitwise feature before v5.28
-use v5.22;
 use feature 'bitwise';
 no warnings 'experimental::bitwise';
 my $z |.= $x;
---- v5.22
+---
 use VERSION;
 use feature 'bitwise';
 no warnings 'experimental::bitwise';
