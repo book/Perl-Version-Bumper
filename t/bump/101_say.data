@@ -1,21 +1,37 @@
 ########## feature say
 use feature 'say';
 say "Hello, world!";
---- v5.10
+---
 use VERSION;
 say "Hello, world!";
+########## no feature say
+no feature 'say';
+print "Hello, world!\n";
+---
+use VERSION;
+no feature 'say';
+print "Hello, world!\n";
 ########## feature say replaces Perl6::Say
 use Perl6::Say;
+say "Hello, Perl6::Say!";
+---
+use VERSION;
+say "Hello, Perl6::Say!";
+########## correctly handle `no Perl6::Say`
+use Perl6::Say;
 say "Hello, world!";
+# no-op
+no Perl6::Say;
 --- v5.10
 use VERSION;
 say "Hello, world!";
+# no-op
 ########## feature say replaces Say::Compat
 use Say::Compat;
-say "Hello, world!";
---- v5.10
+say "Hello, Say::Compat!";
+---
 use VERSION;
-say "Hello, world!";
+say "Hello, Say::Compat!";
 ########## correctly handle `no Say::Compat`
 use Say::Compat;
 say "Hello, world!";
