@@ -1,5 +1,10 @@
-########## feature declared
+########## feature declared_refs
 use feature 'declared_refs';
 ---
 use VERSION;
 use feature 'declared_refs';
+########## no feature declared_refs
+no feature 'declared_refs';
+---
+use VERSION;
+no feature 'declared_refs';
