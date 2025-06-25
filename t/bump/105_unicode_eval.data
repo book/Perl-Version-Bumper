@@ -5,3 +5,8 @@ use VERSION;
 use feature 'unicode_eval';
 --- v5.16
 use VERSION;
+########## no feature unicode_eval
+no feature 'unicode_eval';
+---
+use VERSION;
+no feature 'unicode_eval';
