@@ -5,3 +5,8 @@ use VERSION;
 use feature 'postderef_qq';
 --- v5.24
 use VERSION;
+########## no feature postderef_qq
+no feature 'postderef_qq';
+---
+use VERSION;
+no feature 'postderef_qq';
