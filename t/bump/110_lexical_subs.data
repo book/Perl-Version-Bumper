@@ -1,7 +1,12 @@
 ########## feature lexical_subs
-use feature qw( say lexical_subs );
+use feature 'lexical_subs';
 ---
 use VERSION;
 use feature 'lexical_subs';
 --- v5.26
 use VERSION;
+########## no feature lexical_subs
+no feature 'lexical_subs';
+---
+use VERSION;
+no feature 'lexical_subs';
