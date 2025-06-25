@@ -1,4 +1,4 @@
-########## feature signature
+########## feature signatures
 use feature 'signatures';
 ---
 use VERSION;
@@ -48,3 +48,10 @@ my $sub = sub ($@) { ... }
 --- v5.36
 use VERSION;
 my $sub = sub :prototype($@) { ... }
+########## no feature signatures
+no feature 'signatures';
+sub foo ($) { }
+---
+use VERSION;
+no feature 'signatures';
+sub foo ($) { }

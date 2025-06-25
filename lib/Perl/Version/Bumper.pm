@@ -472,7 +472,7 @@ sub _cleanup_bundled_features {
     my ( $self, $doc, $old_num ) = @_;
     my $version_num       = $self->version_num;
     my $feature_in_bundle = $self->{feature_in_bundle};
-    my %enabled_in_code;
+    my ( %enabled_in_code, %disabled_in_code );
 
     # drop features enabled in this bundle
     # (also if they were enabled with `use experimental`)
@@ -499,18 +499,10 @@ sub _cleanup_bundled_features {
     # deal with compat modules
     $self->_handle_compat_modules($doc);
 
-    # apply some feature shine when crossing the feature enablement boundary
-    for my $feature ( sort grep exists $feature{$_}{enabled}, keys %feature_shine ) {
-        my $feature_enabled = $feature{$feature}{enabled};
-        $feature_shine{$feature}->($doc)
-          if $old_num < $feature_enabled         # code from before the feature
-          && $version_num >= $feature_enabled    # bumped to after the feature
-          && !$enabled_in_code{$feature};        # and not enabling the feature
-    }
-
     # drop disabled features that are not part of the bundle
     for my $no_feature ( _find_include( feature => $doc, 'no' ) ) {
         my @old_args = _ppi_list_to_perl_list( $no_feature->arguments );
+        $disabled_in_code{$_}++ for @old_args;
         my @new_args =                # keep disabling features
           grep exists $feature{$_}    # that actually exist and are
           && !exists $feature_in_bundle->{disabled}{$_},    # not disabled yet
@@ -524,6 +516,16 @@ sub _cleanup_bundled_features {
             $no_feature->remove;
         }
         else { _drop_statement($no_feature); }
+    }
+
+    # apply some feature shine when crossing the feature enablement boundary
+    for my $feature ( sort grep exists $feature{$_}{enabled}, keys %feature_shine ) {
+        my $feature_enabled = $feature{$feature}{enabled};
+        $feature_shine{$feature}->($doc)
+          if $old_num < $feature_enabled         # code from before the feature
+          && $version_num >= $feature_enabled    # bumped to after the feature
+          && !$enabled_in_code{$feature}         # not enabling the feature
+          && !$disabled_in_code{$feature};       # and not disabling the feature
     }
 
     # drop experimental warnings, if any
