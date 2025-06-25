@@ -5,3 +5,8 @@ use VERSION;
 use feature 'unicode_strings';
 --- v5.12
 use VERSION;
+########## no feature unicode_strings
+no feature 'unicode_strings';
+---
+use VERSION;
+no feature 'unicode_strings';
