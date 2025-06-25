@@ -5,3 +5,8 @@ use VERSION;
 use feature 'current_sub';
 --- v5.16
 use VERSION;
+########## no feature current_sub
+no feature 'current_sub';
+---
+use VERSION;
+no feature 'current_sub';
