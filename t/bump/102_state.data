@@ -2,3 +2,8 @@
 use feature 'state';
 ---
 use VERSION;
+########## no feature state
+no feature 'state';
+---
+use VERSION;
+no feature 'state';
