@@ -3,3 +3,8 @@ use feature 'refaliasing';
 ---
 use VERSION;
 use feature 'refaliasing';
+########## no feature refaliasing
+no feature 'refaliasing';
+---
+use VERSION;
+no feature 'refaliasing';
