@@ -1,4 +1,4 @@
-########## no feature 'indirect'
+########## no feature indirect
 no feature 'indirect';
 ---
 use VERSION;
@@ -12,29 +12,20 @@ use VERSION;
 --- v5.36
 use VERSION;
 use feature 'indirect';
-########## no indirect
-use strict;
-use warnings;
-no indirect;
----
-use VERSION;
-use strict;
-use warnings;
-no indirect;
---- v5.12
-use VERSION;
-use warnings;
-no indirect;
---- v5.32
-use VERSION;
-use warnings;
-no feature 'indirect';
---- v5.36
-use VERSION;
-########## use indirect
+########## feature indirect replaces indirect
 use indirect;
 ---
 use VERSION;
 --- v5.36
 use VERSION;
 use feature 'indirect';
+########## no feature indirect replaces no indirect
+no indirect;
+---
+use VERSION;
+no indirect;
+--- v5.32
+use VERSION;
+no feature 'indirect';
+--- v5.36
+use VERSION;
