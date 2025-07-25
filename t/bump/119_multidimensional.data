@@ -1,4 +1,4 @@
-########## no feature 'multidimensional'
+########## no feature multidimensional
 no feature 'multidimensional';
 ---
 use VERSION;
@@ -12,7 +12,7 @@ use VERSION;
 --- v5.36
 use VERSION;
 use feature 'multidimensional';
-########## no multidimensional
+########## no feature multidimensional replaces no multidimensional
 no multidimensional;
 ---
 use VERSION;
@@ -22,7 +22,7 @@ use VERSION;
 no feature 'multidimensional';
 --- v5.36
 use VERSION;
-########## use multidimensional
+########## feature multidimensional replaces multidimensional
 use multidimensional;
 ---
 use VERSION;
