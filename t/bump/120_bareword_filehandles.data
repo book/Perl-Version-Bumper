@@ -1,4 +1,4 @@
-######### no feature 'bareword_filehandles'
+########## no feature bareword_filehandles
 no feature 'bareword_filehandles';
 ---
 use VERSION;
@@ -12,7 +12,7 @@ use VERSION;
 --- v5.38
 use VERSION;
 use feature 'bareword_filehandles';
-########## no bareword::filehandles
+########## no feature bareword_filehandles replaces no bareword::filehandles
 no bareword::filehandles;
 ---
 use VERSION;
@@ -22,7 +22,7 @@ use VERSION;
 no feature 'bareword_filehandles';
 --- v5.38
 use VERSION;
-########## use bareword::filehandles
+########## feature bareword_filehandles replaces bareword::filehandles
 use bareword::filehandles;
 ---
 use VERSION;
