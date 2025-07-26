@@ -1020,6 +1020,117 @@ Return the stable version following the given version, as a number.
 
 Return the stable version preceding the given version, as a number.
 
+=head1 ALGORITHM
+
+For a given version number, a feature has three attributes:
+
+=over 4
+
+=item known
+
+the B<perl> I<binary> knows about the feature starting from that version.
+
+If it's not known, passing it to C<use feature> will I<die> during
+compilation with C<Feature "XXX" is not supported by Perl 5.x.y> (where
+5.x.y is the version of the binary program).
+
+=item enabled
+
+the feature is enabled starting with the corresponding I<feature> bundle
+(i.e. C<use VERSION> will implicitely enable it).
+
+=item disabled
+
+the feature is disabled starting from the corresponding I<feature> bundle
+(i.e. C<use VERSION> will implicitely disable it).
+
+This is the case for so-called "unfeatures", i.e. constructs that were
+deemed undesirable and removed from the language (e.g. C<indirect>,
+C<bareword_filehandles>, etc.).
+
+=back
+
+If there is more than one C<use VERSION> line in the file, the algorithm
+will bail out. Otherwise, the previous C<use VERSION> line will be
+removed, and a new one added at the top of the file (line 1).
+
+The features that were enabled via C<use feature> and are part of the
+C<VERSION> feature bundle will be removed from the corresponding C<use
+feature> or C<use experimental> lines. The disabling of the corresponding
+C<experimental> warnings will be removed.
+
+The features that were disabled via C<no feature> and are disabled as part
+of the C<VERSION> feature bundle will be removed from the corresponding
+C<use feature> or C<use experimental> lines.
+
+If compatibility modules (CPAN modules that provide support for the
+feature in older Perls) were loaded, they will removed if the feature
+is enabled in the feature bundle for C<VERSION>, or replaced by the
+corresponding C<use feature> if the feature is known by the corresponding
+C<perl> binary but not yet enabled by the feature bundle.
+
+When a feature is enabled (or disabled) in the context of a feature
+version bundle that's less than the version when the feature was known
+by Perl, the line won't be removed.
+
+For example this line:
+
+    use feature 'signatures';
+
+will die with any perl before perl5.20.0, because the binary does not
+know about the feature itself.
+
+When writing code like this:
+
+    use v5.10;
+    use feature 'signatures';
+
+one is opting into a version of the Perl language that is not described
+by any specific feature bundle. However, any perl that knows about the
+C<signatures> feature will know how to run it.
+
+Bumping it to the feature bundle for v5.16, for example, is valid,
+and will work with any B<perl> that knows about the C<signatures> feature:
+
+    use v5.16;
+    use feature 'signatures';
+
+And so on until v5.36, when the C<signatures> feature was enabled by
+the corresponding version bundle:
+
+    use v5.36;
+
+Finally, some features may imply extra edits:
+
+=over 4
+
+=item bitwise
+
+When the C<bitwise> feature is enabled, the behaviour of the bitwise
+operators (C<&>, C<|>, C<~> and C<^>) is modified. If the code makes use
+of one of them, and the code is moved from a version I<before> v5.28
+to a version greater or equal to v5.28, the C<bitwise> feature will
+be I<disabled>, and a comment will be added, asking the maintainer to
+review their use according to the C<bitwise> feature before removing it.
+
+=item signatures
+
+When signatures are implicitely enabled, any prototypes will be rewritten
+with the prototype attribute syntax. For example:
+
+    sub foo ($@) { ... }
+
+will become:
+
+    sub foo :prototype($@) { ... }
+
+=item fc
+
+Once C<fc> is implicitely enabled, All uses of C<CORE::fc> will be
+replaced by a bare C<fc>.
+
+=back
+
 =head1 ACKNOWLEDGMENT
 
 This software was originally developed at Booking.com. With approval
