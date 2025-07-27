@@ -1250,13 +1250,13 @@ BEGIN {
                        postderef   5.020    5.024
                     postderef_qq   5.020    5.024
                       signatures   5.020    5.036
-                         bitwise   5.022    5.028
                      refaliasing   5.022
+                         bitwise   5.022    5.028
                    declared_refs   5.026
                         indirect   5.032    5.010    5.036  indirect 0
                              isa   5.032    5.036
-            bareword_filehandles   5.034    5.010    5.038  bareword::filehandles 0
                 multidimensional   5.034    5.010    5.036  multidimensional 0
+            bareword_filehandles   5.034    5.010    5.038  bareword::filehandles 0
                              try   5.034    5.040           Feature::Compat::Try 1 Syntax::Feature::Try 0 Syntax::Keyword::Try 0
                            defer   5.036                    Feature::Compat::Defer 1 Syntax::Keyword::Defer 0
          extra_paired_delimiters   5.036
