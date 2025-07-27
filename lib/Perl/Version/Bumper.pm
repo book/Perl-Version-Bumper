@@ -1131,6 +1131,58 @@ replaced by a bare C<fc>.
 
 =back
 
+=head1 ADDITIONAL INFORMATION ABOUT PERL FEATURES AND CONSTRUCTS
+
+=head2 Official documentation
+
+=over 4
+
+=item L<feature>
+
+Perl pragma to enable new features.
+
+=item L<perlexperiment>
+
+A listing of experimental features in Perl.
+
+=item L<experimental>
+
+This pragma provides an easy and convenient way to enable or disable
+experimental features.
+
+=back
+
+=head2 CPAN Modules
+
+=over 4
+
+=item L<Syntax::Construct>
+
+For some new syntactic constructs, there is the L<feature pragma>.
+For the rest, there is L<Syntax::Construct>.::
+
+=item L<Perl::MinimumVersion>
+
+Find a minimum required version of C<perl> for Perl code.
+
+=item L<Perl::MinimumVersion::Fast>
+
+L<Perl::MinimumVersion::Fast> is an alternative fast & lightweight
+implementation of L<Perl::MinimumVersion>.
+
+=back
+
+=head2 Other
+
+=over 4
+
+=item L<https://sheet.shiar.nl/perl>
+
+The most significant features introduced for recent versions of the Perl
+scripting language.
+
+=back
+
 =head1 ACKNOWLEDGMENT
 
 This software was originally developed at Booking.com. With approval
