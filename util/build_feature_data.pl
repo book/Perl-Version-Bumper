@@ -165,7 +165,13 @@ my $feature_data = join '',
           sort keys %{ $feature{$_}{compat} // {} };
     }
   ],
-  sort { $feature{$a}->{known} <=> $feature{$b}->{known} || $a cmp $b }
+  sort {
+    no warnings 'uninitialized';
+         $feature{$a}->{known}    <=> $feature{$b}->{known}
+      || $feature{$a}->{enabled}  <=> $feature{$b}->{enabled}
+      || $feature{$a}->{disabled} <=> $feature{$b}->{disabled}
+      || $a cmp $b
+  }
   keys %feature;
 
 print $feature_data;
