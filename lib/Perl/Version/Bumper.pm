@@ -13,25 +13,38 @@ use PPI::Token::Operator;
 use PPI::Token::Attribute;
 use Carp qw( carp croak );
 
-# reconstruct everything we know about every feature from the DATA section
-my ( $feature_version, %feature );
-while (<DATA>) {
-    chomp;
-    if (/\A *([1-9][0-9.]*)/) {    # header line
-        $feature_version = version_fmt($1);
-        next;
+# CLASS METHODS
+
+my $feature_version;
+
+sub feature_version { $feature_version }
+
+# reconstruct everything we know about every feature
+# from the $DATA variable defined at the end of the file
+my $FEATURE_DATA;
+
+sub feature_data {
+    my %feature;
+    for ( grep !/\A(?:=|\z)/, split /\n/, $FEATURE_DATA ) {
+        if (/\A *([1-9][0-9.]*)/) {    # header line
+            $feature_version = version_fmt($1);
+            next;
+        }
+        my $feature  = substr $_, 0, 33, '';    # %32s
+        my $known    = substr $_, 0, 9,  '';    # %-8s
+        my $enabled  = substr $_, 0, 9,  '';    # %-8s
+        my $disabled = substr $_, 0, 9,  '';    # %-8s
+        my @compat   = split ' ';               # %s
+        y/ //d for $feature, $known, $enabled, $disabled;
+        $feature{$feature}{known}    = $known;
+        $feature{$feature}{enabled}  = $enabled  if $enabled;
+        $feature{$feature}{disabled} = $disabled if $disabled;
+        $feature{$feature}{compat}   = {@compat} if @compat;
     }
-    my $feature  = substr $_, 0, 33, '';    # %32s
-    my $known    = substr $_, 0, 9,  '';    # %-8s
-    my $enabled  = substr $_, 0, 9,  '';    # %-8s
-    my $disabled = substr $_, 0, 9,  '';    # %-8s
-    my @compat = split ' ';                 # %s
-    y/ //d for $feature, $known, $enabled, $disabled;
-    $feature{$feature}{known}    = $known;
-    $feature{$feature}{enabled}  = $enabled  if $enabled;
-    $feature{$feature}{disabled} = $disabled if $disabled;
-    $feature{$feature}{compat}   = {@compat} if @compat;
+    return \%feature;
 }
+
+my %feature = %{ feature_data() };
 
 # EXPORTABLE FUNCTIONS
 
@@ -85,21 +98,6 @@ sub stable_version_dec {
     return $v ne $s
       ? $s                         # dev -> previous stable
       : sprintf "%.3f", $s - 0.002 # previous stable
-}
-
-# CLASS METHODS
-
-sub feature_version { $feature_version }
-
-sub feature_data {
-    my %data;
-    for my $feature ( keys %feature ) {
-        $feature{$feature}{$_} and $data{$feature}{$_} = $feature{$feature}{$_}
-          for keys %{ $feature{$feature} };
-        $data{$feature}{compat} = { %{ $feature{$feature}{compat} } }
-          if $feature{$feature}{compat};
-    }
-    return \%data;
 }
 
 # CONSTRUCTOR
@@ -1037,7 +1035,7 @@ Return the stable version following the given version, as a number.
 
 Return the stable version preceding the given version, as a number.
 
-=head1 ALGORITHM
+=head1 VERSION UPGRADE ALGORITHM
 
 For a given version number, a feature has three attributes:
 
@@ -1148,6 +1146,127 @@ replaced by a bare C<fc>.
 
 =back
 
+=head2 Feature/version data table
+
+The following table is used to generate the feature data hash.
+
+It is generated using the C<bin/build_feature_data.pl> script
+shipped with the distribution.
+
+The keys are:
+
+=over 4
+
+=item known
+
+when perl first learnt about the feature
+
+=item enabled
+
+when the feature was first enabled (may be before it was known)
+
+=item disabled
+
+when the feature was first disabled
+
+=item compat
+
+replacement modules for features to be deprecated / added
+
+=back
+
+Different features have different lifecycles:
+
+=over 4
+
+=item *
+
+New features (i.e. additional behaviour that didn't exist in Perl v5.8):
+
+=over 4
+
+=item *
+
+are C<known> in the Perl release that introduced them
+
+=item *
+
+are C<enabled> either in the same version (e.g. C<say>, C<state>)
+or after an "experimental" phase (e.g. C<signatures>, C<bitwise>)
+
+=item *
+
+once enabled, they are not meant to be C<disabled> in a later bundle.
+
+=back
+
+=item *
+
+Unfeatures, or backwards compatibility features (features that existed
+in older Perls,  but were later deemed undesirable, and scheduled for
+being eventually disabled or removed):
+
+=over 4
+
+=item *
+
+are C<enabled> in the C<:default> bundle (they were part of the old
+Perl 5 behaviour) before they are even C<known> (a feature that
+represents them was added to Perl).
+
+=item *
+
+are meant to be manually disabled (with C<no feature>), until a
+later feature bundle eventually disables them by default.
+
+=back
+
+=back
+
+"compat" modules are CPAN modules meant to add support to the feature on
+perls where it's not available yet. They exist both for new features and
+backwards compatibility features. The number following the module name in
+the data structure below is the sum of 1 (if the module has an C<import>
+method) and -1 (if the module has an C<unimport> method).
+
+=cut
+
+BEGIN {
+    $FEATURE_DATA = << '=cut';
+
+=pod
+
+                  5.040 features known    enabled  disabled compat
+                             say   5.010    5.010           Perl6::Say 1 Say::Compat 1
+                           state   5.010    5.010
+                          switch   5.010    5.010    5.036
+                 unicode_strings   5.012    5.012
+                      array_base   5.016    5.010    5.016
+                     current_sub   5.016    5.016
+                       evalbytes   5.016    5.016
+                              fc   5.016    5.016
+                    unicode_eval   5.016    5.016
+                    lexical_subs   5.018    5.026
+                       postderef   5.020    5.024
+                    postderef_qq   5.020    5.024
+                      signatures   5.020    5.036
+                         bitwise   5.022    5.028
+                     refaliasing   5.022
+                   declared_refs   5.026
+                        indirect   5.032    5.010    5.036  indirect 0
+                             isa   5.032    5.036
+            bareword_filehandles   5.034    5.010    5.038  bareword::filehandles 0
+                multidimensional   5.034    5.010    5.036  multidimensional 0
+                             try   5.034    5.040           Feature::Compat::Try 1 Syntax::Feature::Try 0 Syntax::Keyword::Try 0
+                           defer   5.036                    Feature::Compat::Defer 1 Syntax::Keyword::Defer 0
+         extra_paired_delimiters   5.036
+                           class   5.038                    Feature::Compat::Class 1
+                     module_true   5.038    5.038
+
+=cut
+
+}
+
 =head1 ADDITIONAL INFORMATION ABOUT PERL FEATURES AND CONSTRUCTS
 
 =head2 Official documentation
@@ -1220,65 +1339,3 @@ This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 
 =cut
-
-# The following data is used to generate the %feature hash.
-#
-# It is generated using the bin/build_feature_data.pl script
-# shipped with the distribution.
-#
-# The keys are:
-# - known:    when perl first learnt about the feature
-# - enabled:  when the feature was first enabled (may be before it was known)
-# - disabled: when the feature was first disabled
-# - compat:   replacement modules for features to be deprecated / added
-#
-# Different features have different lifecycles:
-#
-# * New features (i.e. additional behaviour that didn't exist in Perl v5.8):
-#   - are 'known' in the Perl release that introduced them
-#   - are 'enabled' either in the same version (e.g. 'say', 'state') or
-#     after an "experimental" phase (e.g. 'signatures', 'bitwise')
-#   - once enabled, they are not meant to be 'disabled'
-#
-# * Backwards compatibility features (features that existed in older
-#   Perls,  but were later deemed undesirable, and scheduled for being
-#   eventuall disabled or removed):
-#   - are 'enabled' in the :default bundle (they were part of the old
-#     Perl 5 behaviour) before they are even 'known' (a feature that
-#     represents them was added to Perl).
-#   - are meant to be manually disabled (with `no feature`), until a
-#     later feature bundle eventually disables them by default.
-#
-# "compat" modules are meant to add support to the feature on perls where
-# it's not available yet. They exist both for new features and backwards
-# compatibility features. The number following the module name in the
-# data structure below is the sum of 1 (if the module has an `import`
-# method) and -1 (if the module has an `unimport` method).
-
-__DATA__
-                  5.040 features known    enabled  disabled compat
-                             say   5.010    5.010           Perl6::Say 1 Say::Compat 1
-                           state   5.010    5.010
-                          switch   5.010    5.010    5.036
-                 unicode_strings   5.012    5.012
-                      array_base   5.016    5.010    5.016
-                     current_sub   5.016    5.016
-                       evalbytes   5.016    5.016
-                              fc   5.016    5.016
-                    unicode_eval   5.016    5.016
-                    lexical_subs   5.018    5.026
-                       postderef   5.020    5.024
-                    postderef_qq   5.020    5.024
-                      signatures   5.020    5.036
-                         bitwise   5.022    5.028
-                     refaliasing   5.022
-                   declared_refs   5.026
-                        indirect   5.032    5.010    5.036  indirect 0
-                             isa   5.032    5.036
-            bareword_filehandles   5.034    5.010    5.038  bareword::filehandles 0
-                multidimensional   5.034    5.010    5.036  multidimensional 0
-                             try   5.034    5.040           Feature::Compat::Try 1 Syntax::Feature::Try 0 Syntax::Keyword::Try 0
-                           defer   5.036                    Feature::Compat::Defer 1 Syntax::Keyword::Defer 0
-         extra_paired_delimiters   5.036
-                           class   5.038                    Feature::Compat::Class 1
-                     module_true   5.038    5.038
