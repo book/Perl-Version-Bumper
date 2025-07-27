@@ -909,9 +909,8 @@ Which fails to compile with the following error:
 It's not possible to just bump this code up to C<v5.40> and expect it to
 work, because it uses multidimensional array emulation, and the feature
 that represents this (C<multidimensional>) was disabled in C<v5.36>.
-The actual cause for the error is that Perl v5.36 doesn't support
-multidimensional array emulation. This code will in fact fail to compile
-with all versions greater or equal to C<v5.36>.
+This code will in fact fail to compile with all version bundles greater
+or equal to C<v5.36>.
 
 A I<safe way> to try to bump this code to C<v5.40> is to try with
 C<v5.40>, detect it fails to compile, try again with C<v5.38> and
@@ -922,7 +921,7 @@ bundle). Leaving us with the following code:
     use v5.34;
     my %h; $h{ 1, 2 } = 3;    # same as $foo{"1\x{1c}2"} = 3;
 
-The code needs to be updated to not use multidimensional array emulation
+The code needs to be updated to I<not> use multidimensional array emulation
 before it can I<safely> be bumped past version C<v5.34>.
 
 =head2 Process of a safe bump
