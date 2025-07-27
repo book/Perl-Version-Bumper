@@ -91,6 +91,17 @@ sub stable_version_dec {
 
 sub feature_version { $feature_version }
 
+sub feature_data {
+    my %data;
+    for my $feature ( keys %feature ) {
+        $feature{$feature}{$_} and $data{$feature}{$_} = $feature{$feature}{$_}
+          for keys %{ $feature{$feature} };
+        $data{$feature}{compat} = { %{ $feature{$feature}{compat} } }
+          if $feature{$feature}{compat};
+    }
+    return \%data;
+}
+
 # CONSTRUCTOR
 
 sub _feature_in_bundle {
@@ -834,6 +845,12 @@ Return the version (in numeric format) of the feature set recognized
 by this module. It is not possible to bump code over that version.
 
 The current value of C<feature_version> is: C<5.040>.
+
+=head2 feature_data
+
+Return a I<copy> of the internal data structure containing all the
+information about features. That should only be needed for testing
+and debugging.
 
 =head1 METHODS
 
