@@ -509,22 +509,25 @@ sub _cleanup_bundled_features {
     $self->_handle_compat_modules($doc);
 
     # drop disabled features that are not part of the bundle
-    for my $no_feature ( _find_include( feature => $doc, 'no' ) ) {
-        my @old_args = _ppi_list_to_perl_list( $no_feature->arguments );
-        $disabled_in_code{$_}++ for @old_args;
-        my @new_args =                # keep disabling features
-          grep exists $feature{$_}    # that actually exist and are
-          && !exists $feature_in_bundle->{disabled}{$_},    # not disabled yet
-          @old_args;
-        next if @new_args == @old_args;                     # nothing to change
-        if (@new_args) {    # replace old statement with a smaller one
-            my $new_no_feature = PPI::Document->new(
-                \"no feature @{[ join ', ', map qq{'$_'}, @new_args]};" );
-            $no_feature->insert_before( $_->remove )
-              for $new_no_feature->elements;
-            $no_feature->remove;
+    # (also if they were disabled with `no experimental`)
+    for my $module (qw( feature experimental )) {
+        for my $no_feature ( _find_include( $module => $doc, 'no' ) ) {
+            my @old_args = _ppi_list_to_perl_list( $no_feature->arguments );
+            $disabled_in_code{$_}++ for @old_args;
+            my @new_args =                # keep disabling features
+              grep exists $feature{$_}    # that actually exist and are
+              && !exists $feature_in_bundle->{disabled}{$_},    # not disabled yet
+              @old_args;
+            next if @new_args == @old_args;                     # nothing to change
+            if (@new_args) {    # replace old statement with a smaller one
+                my $new_no_feature = PPI::Document->new(
+                    \"no $module @{[ join ', ', map qq{'$_'}, @new_args]};" );
+                $no_feature->insert_before( $_->remove )
+                  for $new_no_feature->elements;
+                $no_feature->remove;
+            }
+            else { _drop_statement($no_feature); }
         }
-        else { _drop_statement($no_feature); }
     }
 
     # apply some feature shine when crossing the feature enablement boundary
