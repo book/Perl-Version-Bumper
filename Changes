@@ -2,6 +2,11 @@ Revision history for Perl-Version-Bumper
 
 {{$NEXT}}
 
+0.218 2026-02-08 BOOK
+    - remove unfeatures that were disabled using 'experimental'
+    - add links to other useful documentation about Perl features and constructs
+    - add many more test cases
+
 0.181 2024-12-27 BOOK
     - default to the latest stable when running under a dev release of perl
     - fix some tests that were failing with perl versions below v5.20
