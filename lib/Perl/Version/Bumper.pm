@@ -1333,7 +1333,7 @@ Philippe Bruhat (BooK) <book@cpan.org>
 
 =head1 COPYRIGHT
 
-Copyright 2024-2025 Philippe Bruhat (BooK), all rights reserved.
+Copyright 2024-2026 Philippe Bruhat (BooK), all rights reserved.
 
 =head1 LICENSE
 
