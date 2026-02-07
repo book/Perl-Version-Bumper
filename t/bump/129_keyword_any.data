@@ -1,0 +1,22 @@
+########## use feature 'keyword_any'
+use feature 'keyword_any';
+no warnings 'experimental::keyword_any';
+---
+use VERSION;
+use feature 'keyword_any';
+no warnings 'experimental::keyword_any';
+########## no feature 'keyword_any'
+no feature 'keyword_any';
+---
+use VERSION;
+no feature 'keyword_any';
+########## use experimental 'keyword_any'
+use experimental 'keyword_any';
+---
+use VERSION;
+use experimental 'keyword_any';
+########## no experimental 'keyword_any'
+no experimental 'keyword_any';
+---
+use VERSION;
+no experimental 'keyword_any';
