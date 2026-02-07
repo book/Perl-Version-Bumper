@@ -1,0 +1,22 @@
+########## use feature 'keyword_all'
+use feature 'keyword_all';
+no warnings 'experimental::keyword_all';
+---
+use VERSION;
+use feature 'keyword_all';
+no warnings 'experimental::keyword_all';
+########## no feature 'keyword_all'
+no feature 'keyword_all';
+---
+use VERSION;
+no feature 'keyword_all';
+########## use experimental 'keyword_all'
+use experimental 'keyword_all';
+---
+use VERSION;
+use experimental 'keyword_all';
+########## no experimental 'keyword_all'
+no experimental 'keyword_all';
+---
+use VERSION;
+no experimental 'keyword_all';
