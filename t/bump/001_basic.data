@@ -24,6 +24,8 @@ use VERSION;
 { use strict; ... }
 ########## recent version
 use v5.28;
+---
+use v5.28;
 --- v5.28
 use VERSION;
 ########## numeric version
