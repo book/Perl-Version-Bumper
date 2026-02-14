@@ -66,12 +66,19 @@ package Foo;
 use utf8;
 package Bar;
 use strict;
+use warnings;
 ---
 use VERSION;
 use utf8;
 package Bar;
 use strict;
+use warnings;
 --- v5.12
+use VERSION;
+use utf8;
+package Bar;
+use warnings;
+--- v5.36
 use VERSION;
 use utf8;
 package Bar;
