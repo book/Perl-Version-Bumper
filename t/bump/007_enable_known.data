@@ -1,0 +1,360 @@
+enable features as soon as they are known
+########## :5.10
+require v5.10;
+use feature 'say';
+use feature 'state';
+use feature 'switch';
+--- v5.10
+use VERSION;
+--- v5.36
+use VERSION;
+use feature 'switch';
+########## :5.12
+require v5.12;
+use feature 'say';
+use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
+--- v5.12
+use VERSION;
+--- v5.36
+use VERSION;
+use feature 'switch';
+########## :5.16
+require v5.16;
+use feature 'say';
+use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
+#use feature 'array_base';
+use feature 'current_sub';
+use feature 'evalbytes';
+use feature 'fc';
+use feature 'unicode_eval';
+--- v5.16
+use VERSION;
+#use feature 'array_base';
+--- v5.36
+use VERSION;
+use feature 'switch';
+#use feature 'array_base';
+########## :5.18
+require v5.18;
+use feature 'say';
+use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
+use feature 'current_sub';
+use feature 'evalbytes';
+use feature 'fc';
+use feature 'unicode_eval';
+use feature 'lexical_subs';
+--- v5.18
+use VERSION;
+use feature 'lexical_subs';
+--- v5.26
+use VERSION;
+--- v5.36
+use VERSION;
+use feature 'switch';
+########## :5.20
+require v5.20;
+use feature 'say';
+use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
+use feature 'current_sub';
+use feature 'evalbytes';
+use feature 'fc';
+use feature 'unicode_eval';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+--- v5.20
+use VERSION;
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+--- v5.22
+use VERSION;
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+--- v5.24
+use VERSION;
+use feature 'lexical_subs';
+use feature 'signatures';
+--- v5.26
+use VERSION;
+use feature 'signatures';
+--- v5.36
+use VERSION;
+use feature 'switch';
+########## :5.22
+require v5.22;
+use feature 'say';
+use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
+use feature 'current_sub';
+use feature 'evalbytes';
+use feature 'fc';
+use feature 'unicode_eval';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+--- v5.22
+use VERSION;
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+--- v5.24
+use VERSION;
+use feature 'lexical_subs';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+--- v5.26
+use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+--- v5.28
+use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
+--- v5.36
+use VERSION;
+use feature 'switch';
+use feature 'refaliasing';
+########## :5.26
+require v5.26;
+use feature 'say';
+use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
+use feature 'current_sub';
+use feature 'evalbytes';
+use feature 'fc';
+use feature 'unicode_eval';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+use feature 'declared_refs';
+--- v5.26
+use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+use feature 'declared_refs';
+--- v5.28
+use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'declared_refs';
+--- v5.36
+use VERSION;
+use feature 'switch';
+use feature 'refaliasing';
+use feature 'declared_refs';
+########## :5.32
+require v5.32;
+use feature 'say';
+use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
+use feature 'current_sub';
+use feature 'evalbytes';
+use feature 'fc';
+use feature 'unicode_eval';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'isa';
+--- v5.32
+use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'isa';
+--- v5.36
+use VERSION;
+use feature 'switch';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'indirect';
+########## :5.34
+require v5.34;
+use feature 'say';
+use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
+use feature 'current_sub';
+use feature 'evalbytes';
+use feature 'fc';
+use feature 'unicode_eval';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'isa';
+use feature 'multidimensional';
+use feature 'bareword_filehandles';
+use feature 'try';
+--- v5.34
+use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'isa';
+use feature 'try';
+--- v5.36
+use VERSION;
+use feature 'switch';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'multidimensional';
+use feature 'try';
+--- v5.38
+use VERSION;
+use feature 'switch';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'multidimensional';
+use feature 'bareword_filehandles';
+use feature 'try';
+--- v5.40
+use VERSION;
+use feature 'switch';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'multidimensional';
+use feature 'bareword_filehandles';
+########## :5.36
+require v5.36;
+use feature 'say';
+use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
+use feature 'current_sub';
+use feature 'evalbytes';
+use feature 'fc';
+use feature 'unicode_eval';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'isa';
+use feature 'multidimensional';
+use feature 'bareword_filehandles';
+use feature 'try';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
+--- v5.36
+use VERSION;
+use feature 'switch';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'multidimensional';
+use feature 'try';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
+--- v5.38
+use VERSION;
+use feature 'switch';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'multidimensional';
+use feature 'bareword_filehandles';
+use feature 'try';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
+--- v5.40
+use VERSION;
+use feature 'switch';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'multidimensional';
+use feature 'bareword_filehandles';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
+########## :5.38
+require v5.38;
+use feature 'say';
+use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
+use feature 'current_sub';
+use feature 'evalbytes';
+use feature 'fc';
+use feature 'unicode_eval';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'isa';
+use feature 'multidimensional';
+use feature 'bareword_filehandles';
+use feature 'try';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
+use feature 'class';
+use feature 'module_true';
+--- v5.38
+use VERSION;
+use feature 'switch';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'multidimensional';
+use feature 'bareword_filehandles';
+use feature 'try';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
+use feature 'class';
+--- v5.40
+use VERSION;
+use feature 'switch';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'multidimensional';
+use feature 'bareword_filehandles';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
+use feature 'class';
