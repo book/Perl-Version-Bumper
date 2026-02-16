@@ -1,0 +1,18 @@
+variations on use warnings
+########## use warnings
+use warnings;
+---
+use VERSION;
+use warnings;
+--- v5.36
+use VERSION;
+########## no warnings
+no warnings;
+---
+use VERSION;
+no warnings;
+########## no warnings 'unitialized'
+no warnings 'unitialized';
+---
+use VERSION;
+no warnings 'unitialized';
