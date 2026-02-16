@@ -1,0 +1,13 @@
+variations on use strict
+########## use strict
+use strict;
+---
+use VERSION;
+use strict;
+--- v5.12
+use VERSION;
+########## no strict
+no strict;
+---
+use VERSION;
+no strict;
