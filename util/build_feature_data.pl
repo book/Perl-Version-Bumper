@@ -52,7 +52,12 @@ my %feature = (
     # unicode_eval
     # evalbytes
     # current_sub
-    array_base => { known => 5.016, enabled => 5.010, disabled => 5.016 },
+    array_base => {
+        known    => 5.016,
+        enabled  => 5.010,
+        disabled => 5.016,
+        removed  => 5.030,
+    },
 
     # fc
     lexical_subs  => { known => 5.018, enabled => 5.026 },
@@ -153,12 +158,12 @@ for my $feature ( keys %feature ) {
 # build the tabular data
 my $feature_data = join '',
   map { s/ +\Z//; $_ }    # trim whitespace added by sprintf
-  map sprintf( "%32s %-8s %-8s %-8s %s\n", @$_ ),
-  [ "$version features", qw( known enabled disabled compat ) ],
+  map sprintf( "%32s %-8s %-8s %-8s %-8s %s\n", @$_ ),
+  [ "$version features", qw( known enabled disabled removed compat ) ],
   map [
     $_,                                       # feature name
     map ( $_ ? sprintf "  %5.3f", $_ : '',    # version numbers
-        @{ $feature{$_} }{qw( known enabled disabled)} ),
+        @{ $feature{$_} }{qw( known enabled disabled removed )} ),
     do {                                      # compat modules
         my $feature = $_;
         join ' ', map +( $_ => $feature{$feature}{compat}{$_} ),

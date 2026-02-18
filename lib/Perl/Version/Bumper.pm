@@ -34,11 +34,13 @@ sub feature_data {
         my $known    = substr $_, 0, 9,  '';    # %-8s
         my $enabled  = substr $_, 0, 9,  '';    # %-8s
         my $disabled = substr $_, 0, 9,  '';    # %-8s
+        my $removed  = substr $_, 0, 9,  '';    # %-8s
         my @compat   = split ' ';               # %s
         y/ //d for $feature, $known, $enabled, $disabled;
         $feature{$feature}{known}     = $known;
         $feature{$feature}{enabled}   = $enabled  if $enabled;
         $feature{$feature}{disabled}  = $disabled if $disabled;
+        $feature{$feature}{removed}   = $removed  if $removed;
         $feature{$feature}{compat}    = {@compat} if @compat;
         $feature{$feature}{unfeature} = 1         if $disabled;
     }
@@ -1072,6 +1074,12 @@ This is the case for so-called "unfeatures", i.e. constructs that were
 deemed undesirable and removed from the language (e.g. C<indirect>,
 C<bareword_filehandles>, etc.).
 
+=item removed
+
+the feature was removed starting from the given version.
+
+The only feature that was removed so far is C<array_base> (in Perl v5.30).
+
 =back
 
 If there is more than one C<use VERSION> line in the file, the algorithm
@@ -1245,12 +1253,12 @@ BEGIN {
 
 =pod
 
-                  5.040 features known    enabled  disabled compat
-                             say   5.010    5.010           Perl6::Say 1 Say::Compat 1
+                  5.040 features known    enabled  disabled removed  compat
+                             say   5.010    5.010                    Perl6::Say 1 Say::Compat 1
                            state   5.010    5.010
                           switch   5.010    5.010    5.036
                  unicode_strings   5.012    5.012
-                      array_base   5.016    5.010    5.016
+                      array_base   5.016    5.010    5.016    5.030
                      current_sub   5.016    5.016
                        evalbytes   5.016    5.016
                               fc   5.016    5.016
@@ -1262,14 +1270,14 @@ BEGIN {
                      refaliasing   5.022
                          bitwise   5.022    5.028
                    declared_refs   5.026
-                        indirect   5.032    5.010    5.036  indirect 0
+                        indirect   5.032    5.010    5.036           indirect 0
                              isa   5.032    5.036
-                multidimensional   5.034    5.010    5.036  multidimensional 0
-            bareword_filehandles   5.034    5.010    5.038  bareword::filehandles 0
-                             try   5.034    5.040           Feature::Compat::Try 1 Syntax::Feature::Try 0 Syntax::Keyword::Try 0
-                           defer   5.036                    Feature::Compat::Defer 1 Syntax::Keyword::Defer 0
+            bareword_filehandles   5.034    5.010    5.038           bareword::filehandles 0
+                multidimensional   5.034    5.010    5.036           multidimensional 0
+                             try   5.034    5.040                    Feature::Compat::Try 1 Syntax::Feature::Try 0 Syntax::Keyword::Try 0
+                           defer   5.036                             Feature::Compat::Defer 1 Syntax::Keyword::Defer 0
          extra_paired_delimiters   5.036
-                           class   5.038                    Feature::Compat::Class 1
+                           class   5.038                             Feature::Compat::Class 1
                      module_true   5.038    5.038
 
 =cut
