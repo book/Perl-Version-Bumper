@@ -1,13 +1,13 @@
 translate features into bundles
 
-inspired from:
-https://blogs.perl.org/users/psc/2022/05/what-happened-to-perl-7.html
+explicitly enable and disable the features in each bundle
+as soon as they are "known"
 ########## :5.10
 require v5.10;
 use feature 'say';
 use feature 'state';
 use feature 'switch';
----
+--- v5.10
 use VERSION;
 --- v5.36
 use VERSION;
@@ -41,29 +41,36 @@ require v5.16;
 use strict;
 use feature 'say';
 use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
+#use feature 'array_base';
 use feature 'current_sub';
 use feature 'evalbytes';
 use feature 'fc';
-use feature 'switch';
 use feature 'unicode_eval';
-use feature 'unicode_strings';
 --- v5.16
 use VERSION;
+#use feature 'array_base';
 --- v5.36
 use VERSION;
 use feature 'switch';
+#use feature 'array_base';
 ########## :5.18
 require v5.18;
 use strict;
 use feature 'say';
 use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
 use feature 'current_sub';
 use feature 'evalbytes';
 use feature 'fc';
-use feature 'switch';
 use feature 'unicode_eval';
-use feature 'unicode_strings';
+use feature 'lexical_subs';
 --- v5.18
+use VERSION;
+use feature 'lexical_subs';
+--- v5.26
 use VERSION;
 --- v5.36
 use VERSION;
@@ -73,14 +80,29 @@ require v5.20;
 use strict;
 use feature 'say';
 use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
 use feature 'current_sub';
 use feature 'evalbytes';
 use feature 'fc';
-use feature 'switch';
 use feature 'unicode_eval';
-use feature 'unicode_strings';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
 --- v5.20
 use VERSION;
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+--- v5.24
+use VERSION;
+use feature 'lexical_subs';
+use feature 'signatures';
+--- v5.26
+use VERSION;
+use feature 'signatures';
 --- v5.36
 use VERSION;
 use feature 'switch';
@@ -89,161 +111,379 @@ require v5.22;
 use strict;
 use feature 'say';
 use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
 use feature 'current_sub';
 use feature 'evalbytes';
 use feature 'fc';
-use feature 'switch';
 use feature 'unicode_eval';
-use feature 'unicode_strings';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
 --- v5.22
 use VERSION;
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+--- v5.24
+use VERSION;
+use feature 'lexical_subs';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+--- v5.26
+use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+--- v5.28
+use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
 --- v5.36
 use VERSION;
 use feature 'switch';
+use feature 'refaliasing';
 ########## :5.24
 require v5.24;
 use strict;
 use feature 'say';
 use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
 use feature 'current_sub';
 use feature 'evalbytes';
 use feature 'fc';
-use feature 'postderef_qq';
-use feature 'switch';
 use feature 'unicode_eval';
-use feature 'unicode_strings';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
 --- v5.24
 use VERSION;
+use feature 'lexical_subs';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+--- v5.26
+use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+--- v5.28
+use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
 --- v5.36
 use VERSION;
 use feature 'switch';
+use feature 'refaliasing';
 ########## :5.26
 require v5.26;
 use strict;
 use feature 'say';
 use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
 use feature 'current_sub';
 use feature 'evalbytes';
 use feature 'fc';
-use feature 'lexical_subs';
-use feature 'postderef_qq';
-use feature 'switch';
 use feature 'unicode_eval';
-use feature 'unicode_strings';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+use feature 'declared_refs';
 --- v5.26
 use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+use feature 'declared_refs';
+--- v5.28
+use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'declared_refs';
 --- v5.36
 use VERSION;
 use feature 'switch';
-########## don't get medieval
+use feature 'refaliasing';
+use feature 'declared_refs';
+########## :5.28
 require v5.28;
 use strict;
 use feature 'say';
 use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
 use feature 'current_sub';
-use feature 'bitwise';
 use feature 'evalbytes';
 use feature 'fc';
-use feature 'lexical_subs';
-use feature 'postderef_qq';
-use feature 'switch';
 use feature 'unicode_eval';
-use feature 'unicode_strings';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+use feature 'declared_refs';
 --- v5.28
 use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'declared_refs';
 --- v5.36
 use VERSION;
 use feature 'switch';
+use feature 'refaliasing';
+use feature 'declared_refs';
 ########## :5.30
 require v5.30;
 use strict;
 use feature 'say';
 use feature 'state';
-use feature 'current_sub';
-use feature 'fc';
-use feature 'lexical_subs';
-use feature 'bareword_filehandles';
-use feature 'bitwise';
-use feature 'evalbytes';
-use feature 'postderef_qq';
 use feature 'switch';
-use feature 'unicode_eval';
 use feature 'unicode_strings';
+use feature 'current_sub';
+use feature 'evalbytes';
+use feature 'fc';
+use feature 'unicode_eval';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+use feature 'declared_refs';
 --- v5.30
 use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'declared_refs';
 --- v5.36
 use VERSION;
 use feature 'switch';
+use feature 'refaliasing';
+use feature 'declared_refs';
+########## :5.32
+require v5.32;
+use strict;
+use feature 'say';
+use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
+use feature 'current_sub';
+use feature 'evalbytes';
+use feature 'fc';
+use feature 'unicode_eval';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'isa';
+--- v5.32
+use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'isa';
+--- v5.36
+use VERSION;
+use feature 'switch';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'indirect';
+########## :5.34
+require v5.34;
+use strict;
+use feature 'say';
+use feature 'state';
+use feature 'switch';
+use feature 'unicode_strings';
+use feature 'current_sub';
+use feature 'evalbytes';
+use feature 'fc';
+use feature 'unicode_eval';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'isa';
+use feature 'bareword_filehandles';
+use feature 'multidimensional';
+use feature 'try';
+--- v5.34
+use VERSION;
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'isa';
+use feature 'try';
+--- v5.36
+use VERSION;
+use feature 'switch';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'multidimensional';
+use feature 'try';
 --- v5.38
 use VERSION;
-use feature 'bareword_filehandles';
 use feature 'switch';
-########## what happened to perl 7
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'bareword_filehandles';
+use feature 'multidimensional';
+use feature 'try';
+--- v5.40
+use VERSION;
+use feature 'switch';
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'indirect';
+use feature 'bareword_filehandles';
+use feature 'multidimensional';
+########## :5.36
 require v5.36;
 use strict;
 use warnings;
 use feature 'say';
 use feature 'state';
+no feature 'switch';
+use feature 'unicode_strings';
 use feature 'current_sub';
+use feature 'evalbytes';
 use feature 'fc';
+use feature 'unicode_eval';
 use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
 use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+use feature 'declared_refs';
+no feature 'indirect';
 use feature 'isa';
 use feature 'bareword_filehandles';
-use feature 'bitwise';
-use feature 'evalbytes';
-use feature 'postderef_qq';
-use feature 'unicode_eval';
-use feature 'unicode_strings';
-no feature 'indirect';
 no feature 'multidimensional';
+use feature 'try';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
 --- v5.36
 use VERSION;
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'try';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
 --- v5.38
 use VERSION;
+use feature 'refaliasing';
+use feature 'declared_refs';
 use feature 'bareword_filehandles';
+use feature 'try';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
+--- v5.40
+use VERSION;
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'bareword_filehandles';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
 ########## :5.38
 require v5.38;
 use strict;
 use warnings;
 use feature 'say';
 use feature 'state';
-use feature 'current_sub';
-use feature 'fc';
-use feature 'lexical_subs';
-use feature 'signatures';
-use feature 'isa';
-use feature 'bitwise';
-use feature 'evalbytes';
-use feature 'postderef_qq';
-use feature 'unicode_eval';
+no feature 'switch';
 use feature 'unicode_strings';
-use feature 'module_true';
+use feature 'current_sub';
+use feature 'evalbytes';
+use feature 'fc';
+use feature 'unicode_eval';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+use feature 'declared_refs';
 no feature 'indirect';
-no feature 'multidimensional';
+use feature 'isa';
 no feature 'bareword_filehandles';
+no feature 'multidimensional';
+use feature 'try';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
+use feature 'class';
 --- v5.38
 use VERSION;
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'try';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
+use feature 'class';
+--- v5.40
+use VERSION;
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
+use feature 'class';
 ########## :5.40
 require v5.40;
 use strict;
 use warnings;
 use feature 'say';
 use feature 'state';
-use feature 'current_sub';
-use feature 'fc';
-use feature 'lexical_subs';
-use feature 'signatures';
-use feature 'isa';
-use feature 'bitwise';
-use feature 'evalbytes';
-use feature 'postderef_qq';
-use feature 'unicode_eval';
+no feature 'switch';
 use feature 'unicode_strings';
-use feature 'module_true';
-use feature 'try';
+use feature 'current_sub';
+use feature 'evalbytes';
+use feature 'fc';
+use feature 'unicode_eval';
+use feature 'lexical_subs';
+use feature 'postderef';
+use feature 'postderef_qq';
+use feature 'signatures';
+use feature 'refaliasing';
+use feature 'bitwise';
+use feature 'declared_refs';
 no feature 'indirect';
-no feature 'multidimensional';
+use feature 'isa';
 no feature 'bareword_filehandles';
+no feature 'multidimensional';
+use feature 'try';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
+use feature 'class';
 --- v5.40
 use VERSION;
+use feature 'refaliasing';
+use feature 'declared_refs';
+use feature 'defer';
+use feature 'extra_paired_delimiters';
+use feature 'class';
