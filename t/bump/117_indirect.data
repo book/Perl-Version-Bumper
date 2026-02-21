@@ -21,7 +21,8 @@ use VERSION;
 use indirect;
 ---
 use VERSION;
---- v5.36
+use indirect;
+--- v5.32
 use VERSION;
 use feature 'indirect';
 ########## no feature indirect replaces no indirect

@@ -453,27 +453,31 @@ sub _handle_compat_modules {
 
                 # handle `use $compat;`
                 if ( $include_compat->type eq 'use' ) {
+                    my $drop_stmt;    # should we drop the old statement?
 
-                    # if the feature is known and neither enabled nor disabled
+                    # if the feature is known and not enabled or an unfeature
                     # and the compat module has an import() sub
                     if (   exists $feature_in_bundle->{known}{$feature}
                         && (  !exists $feature_in_bundle->{enabled}{$feature}
-                            || exists $feature_in_bundle->{disabled}{$feature} )
+                            || exists $feature{$feature}{unfeature} )
                         && $feature{$feature}{compat}{$compat} >= 0 )
                     {
                         my $use_feature =
                           PPI::Document->new( \"use feature '$feature';\n" );
                         $include_compat->insert_after( $_->remove )
                           for $use_feature->elements;
+                        $drop_stmt++;    # it's been replaced
                     }
 
                     # backward compatibility features, like 'indirect',
                     # can be enabled before being known
                     # (also handle the unlikely case where there's no import())
-                    _drop_statement($include_compat)
-                      if exists $feature_in_bundle->{enabled}{$feature}
-                      || exists $feature_in_bundle->{known}{$feature}
-                      || $feature{$feature}{compat}{$compat} < 0;
+                    $drop_stmt++
+                      if !exists $feature{$feature}{unfeature}
+                      && ( exists $feature_in_bundle->{enabled}{$feature}
+                        || $feature{$feature}{compat}{$compat} < 0 );
+
+                    _drop_statement($include_compat) if $drop_stmt;
                 }
             }
         }

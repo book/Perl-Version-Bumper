@@ -24,6 +24,7 @@ use VERSION;
 use multidimensional;
 ---
 use VERSION;
---- v5.36
+use multidimensional;
+--- v5.34
 use VERSION;
 use feature 'multidimensional';

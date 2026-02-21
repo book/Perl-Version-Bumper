@@ -24,6 +24,7 @@ use VERSION;
 use bareword::filehandles;
 ---
 use VERSION;
---- v5.38
+use bareword::filehandles;
+--- v5.34
 use VERSION;
 use feature 'bareword_filehandles';
