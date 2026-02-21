@@ -2,6 +2,12 @@ Revision history for Perl-Version-Bumper
 
 {{$NEXT}}
 
+0.235 2026-02-21 BOOK
+    - record when features were removed
+    - keep enabled unfeatures when bumping versions, for documentation purposes
+      (also applies to backcompatibility modules for unfeatures)
+    - add more tests and documentation
+
 0.224 2026-02-15 BOOK
     - minor documentation updates
     - minor test updates
