@@ -9,8 +9,6 @@ use VERSION;
 use feature 'multidimensional';
 ---
 use VERSION;
---- v5.36
-use VERSION;
 use feature 'multidimensional';
 ########## no feature multidimensional replaces no multidimensional
 no multidimensional;

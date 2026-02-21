@@ -492,9 +492,10 @@ sub _cleanup_bundled_features {
         for my $use_line ( _find_include( $module => $doc, 'use' ) ) {
             my @old_args = _ppi_list_to_perl_list( $use_line->arguments );
             $enabled_in_code{$_}++ for @old_args;
-            my @new_args =                # keep enabling features
-              grep exists $feature{$_}    # that actually exist and are
-              && !exists $feature_in_bundle->{enabled}{$_},    # not enabled yet
+            my @new_args =    # keep enabling features that
+              grep !exists $feature_in_bundle->{enabled}{$_}    # are not enabled yet
+                 || exists $feature{$_}{unfeature},             # or are unfeatures
+              grep exists $feature{$_},                         # and actually exist
               @old_args;
             next if @new_args == @old_args;    # nothing to change
             if (@new_args) {    # replace old statement with a smaller one
@@ -1091,15 +1092,24 @@ C<VERSION> feature bundle will be removed from the corresponding C<use
 feature> or C<use experimental> lines. The disabling of the corresponding
 C<experimental> warnings will be removed.
 
-The features that were disabled via C<no feature> and are disabled as part
-of the C<VERSION> feature bundle will be removed from the corresponding
-C<use feature> or C<use experimental> lines.
+"Unfeatures" are treated differently. Unfeatures are features that were
+created to represent historical Perl behaviour, and are considered enabled
+by default in all bundles until they are disabled at a later stage. If an
+unfeature is enabled, it is considered to be for documentation purposes
+(to indicate that the undesirable historical feature was used), and
+therefore not removed, even if the specified C<VERSION> enables it.
+
+The (un)features that were disabled via C<no feature> and are disabled
+as part of the C<VERSION> feature bundle will be removed from the
+corresponding C<use feature> or C<use experimental> lines.
 
 If compatibility modules (CPAN modules that provide support for the
 feature in older Perls) were loaded, they will removed if the feature
 is enabled in the feature bundle for C<VERSION>, or replaced by the
 corresponding C<use feature> if the feature is known by the corresponding
-C<perl> binary but not yet enabled by the feature bundle.
+C<perl> binary but not yet enabled by the feature bundle. (In the context
+of compatibility modules for unfeatures, the same consideration for
+documentation purposes apply.)
 
 When a feature is enabled (or disabled) in the context of a feature
 version bundle that's less than the version when the feature was known

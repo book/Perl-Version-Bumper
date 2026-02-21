@@ -2,8 +2,6 @@
 use feature 'array_base';
 ---
 use VERSION;
---- v5.16
-use VERSION;
 use feature 'array_base';
 ########## no feature array_base
 no feature 'array_base';

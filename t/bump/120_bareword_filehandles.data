@@ -9,8 +9,6 @@ use VERSION;
 use feature 'bareword_filehandles';
 ---
 use VERSION;
---- v5.38
-use VERSION;
 use feature 'bareword_filehandles';
 ########## no feature bareword_filehandles replaces no bareword::filehandles
 no bareword::filehandles;

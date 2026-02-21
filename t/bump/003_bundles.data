@@ -9,6 +9,7 @@ use feature 'state';
 use feature 'switch';
 --- v5.10
 use VERSION;
+use feature 'switch';
 --- v5.36
 use VERSION;
 use feature 'switch';
@@ -21,8 +22,6 @@ use feature 'switch';
 use feature 'unicode_strings';
 --- v5.12
 use VERSION;
---- v5.36
-use VERSION;
 use feature 'switch';
 ########## :5.14
 require v5.14;
@@ -32,8 +31,6 @@ use feature 'state';
 use feature 'switch';
 use feature 'unicode_strings';
 --- v5.14
-use VERSION;
---- v5.36
 use VERSION;
 use feature 'switch';
 ########## :5.16
@@ -49,9 +46,6 @@ use feature 'evalbytes';
 use feature 'fc';
 use feature 'unicode_eval';
 --- v5.16
-use VERSION;
-#use feature 'array_base';
---- v5.36
 use VERSION;
 use feature 'switch';
 #use feature 'array_base';
@@ -69,10 +63,9 @@ use feature 'unicode_eval';
 use feature 'lexical_subs';
 --- v5.18
 use VERSION;
+use feature 'switch';
 use feature 'lexical_subs';
 --- v5.26
-use VERSION;
---- v5.36
 use VERSION;
 use feature 'switch';
 ########## :5.20
@@ -92,16 +85,19 @@ use feature 'postderef_qq';
 use feature 'signatures';
 --- v5.20
 use VERSION;
+use feature 'switch';
 use feature 'lexical_subs';
 use feature 'postderef';
 use feature 'postderef_qq';
 use feature 'signatures';
 --- v5.24
 use VERSION;
+use feature 'switch';
 use feature 'lexical_subs';
 use feature 'signatures';
 --- v5.26
 use VERSION;
+use feature 'switch';
 use feature 'signatures';
 --- v5.36
 use VERSION;
@@ -125,6 +121,7 @@ use feature 'refaliasing';
 use feature 'bitwise';
 --- v5.22
 use VERSION;
+use feature 'switch';
 use feature 'lexical_subs';
 use feature 'postderef';
 use feature 'postderef_qq';
@@ -133,17 +130,20 @@ use feature 'refaliasing';
 use feature 'bitwise';
 --- v5.24
 use VERSION;
+use feature 'switch';
 use feature 'lexical_subs';
 use feature 'signatures';
 use feature 'refaliasing';
 use feature 'bitwise';
 --- v5.26
 use VERSION;
+use feature 'switch';
 use feature 'signatures';
 use feature 'refaliasing';
 use feature 'bitwise';
 --- v5.28
 use VERSION;
+use feature 'switch';
 use feature 'signatures';
 use feature 'refaliasing';
 --- v5.36
@@ -169,17 +169,20 @@ use feature 'refaliasing';
 use feature 'bitwise';
 --- v5.24
 use VERSION;
+use feature 'switch';
 use feature 'lexical_subs';
 use feature 'signatures';
 use feature 'refaliasing';
 use feature 'bitwise';
 --- v5.26
 use VERSION;
+use feature 'switch';
 use feature 'signatures';
 use feature 'refaliasing';
 use feature 'bitwise';
 --- v5.28
 use VERSION;
+use feature 'switch';
 use feature 'signatures';
 use feature 'refaliasing';
 --- v5.36
@@ -206,12 +209,14 @@ use feature 'bitwise';
 use feature 'declared_refs';
 --- v5.26
 use VERSION;
+use feature 'switch';
 use feature 'signatures';
 use feature 'refaliasing';
 use feature 'bitwise';
 use feature 'declared_refs';
 --- v5.28
 use VERSION;
+use feature 'switch';
 use feature 'signatures';
 use feature 'refaliasing';
 use feature 'declared_refs';
@@ -240,6 +245,7 @@ use feature 'bitwise';
 use feature 'declared_refs';
 --- v5.28
 use VERSION;
+use feature 'switch';
 use feature 'signatures';
 use feature 'refaliasing';
 use feature 'declared_refs';
@@ -268,6 +274,7 @@ use feature 'bitwise';
 use feature 'declared_refs';
 --- v5.30
 use VERSION;
+use feature 'switch';
 use feature 'signatures';
 use feature 'refaliasing';
 use feature 'declared_refs';
@@ -298,9 +305,11 @@ use feature 'indirect';
 use feature 'isa';
 --- v5.32
 use VERSION;
+use feature 'switch';
 use feature 'signatures';
 use feature 'refaliasing';
 use feature 'declared_refs';
+use feature 'indirect';
 use feature 'isa';
 --- v5.36
 use VERSION;
@@ -333,10 +342,14 @@ use feature 'multidimensional';
 use feature 'try';
 --- v5.34
 use VERSION;
+use feature 'switch';
 use feature 'signatures';
 use feature 'refaliasing';
 use feature 'declared_refs';
+use feature 'indirect';
 use feature 'isa';
+use feature 'bareword_filehandles';
+use feature 'multidimensional';
 use feature 'try';
 --- v5.36
 use VERSION;
@@ -344,6 +357,7 @@ use feature 'switch';
 use feature 'refaliasing';
 use feature 'declared_refs';
 use feature 'indirect';
+use feature 'bareword_filehandles';
 use feature 'multidimensional';
 use feature 'try';
 --- v5.38
@@ -393,6 +407,7 @@ use feature 'extra_paired_delimiters';
 use VERSION;
 use feature 'refaliasing';
 use feature 'declared_refs';
+use feature 'bareword_filehandles';
 use feature 'try';
 use feature 'defer';
 use feature 'extra_paired_delimiters';
