@@ -105,9 +105,11 @@ my %callback = (
 );
 
 sub test_dir {
-    my %args = @_;
-    my $dir  = path(__FILE__)->parent->parent->child( $args{dir} );
-    test_file( %args, file => $_ ) for sort $dir->children(qr/\.data\z/);
+    my %args  = @_;
+    my $dir   = path(__FILE__)->parent->parent->child( $args{dir} );
+    my @files = sort $dir->children(qr/\.data\z/);
+    plan( scalar @files );
+    test_file( %args, file => $_ ) for @files;
 }
 
 sub test_file {
