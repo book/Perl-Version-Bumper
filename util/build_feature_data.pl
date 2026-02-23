@@ -47,6 +47,8 @@ my %feature = (
     },
 
     # state
+    smartmatch => { known => 5.042, enabled => 5.010 },
+
     # switch
     # unicode_strings
     # unicode_eval
@@ -104,6 +106,9 @@ my %feature = (
         known  => 5.038,
         compat => { 'Feature::Compat::Class' => 1 },    # import
     },
+    apostrophe_as_package_separator => { known => 5.042 },
+    keyword_all                     => { known => 5.042 },
+    keyword_any                     => { known => 5.042 },
 );
 
 # complete the %features data structure
