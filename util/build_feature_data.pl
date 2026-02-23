@@ -172,9 +172,16 @@ my $feature_data = join '',
   ],
   sort {
     no warnings 'uninitialized';
-         $feature{$a}->{known}    <=> $feature{$b}->{known}
-      || $feature{$a}->{enabled}  <=> $feature{$b}->{enabled}
-      || $feature{$a}->{disabled} <=> $feature{$b}->{disabled}
+    $feature{$a}{known} <=> $feature{$b}{known}
+      || ( # sort empty after numbers
+          exists $feature{$a}{enabled}
+        ? exists $feature{$b}{enabled}
+            ? $feature{$a}{enabled} <=> $feature{$b}{enabled}
+            : -1
+        : exists $feature{$b}{enabled} ? 1
+                                       : 0
+      )
+      || $feature{$a}{disabled} <=> $feature{$b}{disabled}
       || $a cmp $b
   }
   keys %feature;
