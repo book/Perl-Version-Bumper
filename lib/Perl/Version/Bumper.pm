@@ -343,79 +343,86 @@ sub _version_stmts {
 }
 
 my %feature_shine = (
+    when_enabled => {
 
-    # the 'bitwise' feature may break bitwise operators,
-    # so disable it when bitwise operators are detected
-    bitwise => sub {
-        my ($doc) = @_;
+        # the 'bitwise' feature may break bitwise operators,
+        # so disable it when bitwise operators are detected
+        bitwise => sub {
+            my ($doc) = @_;
 
-        # this only matters for code using bitwise ops
-        return unless $doc->find(
-            sub {
-                my ( $root, $elem ) = @_;
-                $elem->isa('PPI::Token::Operator') && $elem =~ /\A[&|~^]=?\z/;
-            }
-        );
+            # this only matters for code using bitwise ops
+            return unless $doc->find(
+                sub {
+                    my ( $root, $elem ) = @_;
+                    $elem->isa('PPI::Token::Operator')
+                      && $elem =~ /\A[&|~^]=?\z/;
+                }
+            );
 
-        # the `use VERSION` inserted earlier is always the first one in the doc
-        my $insert_point = ( _version_stmts($doc) )[0];
-        my $indent = $insert_point->previous_sibling
-          && $insert_point->previous_sibling->isa('PPI::Token::Whitespace')
-          ? $insert_point->previous_sibling
-          : '';
-        my $no_feature_bitwise =
-          PPI::Document->new( \"no feature 'bitwise';\n" );
-        $insert_point->insert_after( $_->remove )
-          for $no_feature_bitwise->elements;
+            # the `use VERSION` inserted earlier is always the first in the doc
+            my $insert_point = ( _version_stmts($doc) )[0];
+            my $indent = $insert_point->previous_sibling
+              && $insert_point->previous_sibling->isa('PPI::Token::Whitespace')
+              ? $insert_point->previous_sibling
+              : '';
+            my $no_feature_bitwise =
+              PPI::Document->new( \"no feature 'bitwise';\n" );
+            $insert_point->insert_after( $_->remove )
+              for $no_feature_bitwise->elements;
 
-        # also add an IMPORTANT comment to warn users
-        $insert_point = $insert_point->snext_sibling;
-        my $todo_comment =
-          PPI::Document->new( \( << "TODO_COMMENT" ) );
+            # also add an IMPORTANT comment to warn users
+            $insert_point = $insert_point->snext_sibling;
+            my $todo_comment = PPI::Document->new( \( << "TODO_COMMENT" ) );
 
 $indent# IMPORTANT: Please double-check the use of bitwise operators
 $indent# before removing the `no feature 'bitwise';` line below.
 $indent# See manual pages 'feature' (section "The 'bitwise' feature")
 $indent# and 'perlop' (section "Bitwise String Operators") for details.
 TODO_COMMENT
-        $insert_point->insert_before( $_->remove ) for $todo_comment->elements;
-        $insert_point->insert_before( $indent->clone ) if $indent;
-    },
+            $insert_point->insert_before( $_->remove )
+              for $todo_comment->elements;
+            $insert_point->insert_before( $indent->clone ) if $indent;
+        },
 
-    # the 'signatures' feature needs prototypes to be updated.
-    signatures => sub {
-        my ($doc) = @_;
+        # the 'signatures' feature needs prototypes to be updated.
+        signatures => sub {
+            my ($doc) = @_;
 
-        # find all subs with prototypes
-        my $prototypes = $doc->find('PPI::Token::Prototype');
-        return unless $prototypes;
+            # find all subs with prototypes
+            my $prototypes = $doc->find('PPI::Token::Prototype');
+            return unless $prototypes;
 
-        # and turn them into prototype attributes
-        for my $proto (@$prototypes) {
-            $proto->insert_before( PPI::Token::Operator->new(':') );
-            $proto->insert_before(
-                PPI::Token::Attribute->new("prototype$proto") );
-            $proto->remove;
-        }
-    },
-
-    # the 'fc' feature means CORE::fc is not required
-    fc => sub {
-        my ($doc) = @_;
-
-        # find all occurences of 'CORE::fc'
-        my $core_fc = $doc->find(
-            sub {
-                my ( $root, $elem ) = @_;
-                return !!1 if $elem->isa('PPI::Token::Word') && $elem eq 'CORE::fc';
-                return !!0;
+            # and turn them into prototype attributes
+            for my $proto (@$prototypes) {
+                $proto->insert_before( PPI::Token::Operator->new(':') );
+                $proto->insert_before(
+                    PPI::Token::Attribute->new("prototype$proto") );
+                $proto->remove;
             }
-        );
-        return unless $core_fc;
+        },
 
-        # and replace them by 'fc'
-        $_->replace( PPI::Token::Word->new('fc') ) for @$core_fc;
+        # the 'fc' feature means CORE::fc is not required
+        fc => sub {
+            my ($doc) = @_;
+
+            # find all occurences of 'CORE::fc'
+            my $core_fc = $doc->find(
+                sub {
+                    my ( $root, $elem ) = @_;
+                    return !!1
+                      if $elem->isa('PPI::Token::Word') && $elem eq 'CORE::fc';
+                    return !!0;
+                }
+            );
+            return unless $core_fc;
+
+            # and replace them by 'fc'
+            $_->replace( PPI::Token::Word->new('fc') ) for @$core_fc;
+        },
     },
+
+    when_disabled => { },
+
 );
 
 # PRIVATE "METHODS"
@@ -539,11 +546,21 @@ sub _cleanup_bundled_features {
     }
 
     # apply some feature shine when crossing the feature enablement boundary
-    for my $feature ( sort grep exists $feature{$_}{enabled}, keys %feature_shine ) {
+    for my $feature ( sort keys %{ $feature_shine{when_enabled} }  ) {
         my $feature_enabled = $feature{$feature}{enabled};
-        $feature_shine{$feature}->($doc)
+        $feature_shine{when_enabled}{$feature}->($doc)
           if $old_num < $feature_enabled         # code from before the feature
           && $version_num >= $feature_enabled    # bumped to after the feature
+          && !$enabled_in_code{$feature}         # not enabling the feature
+          && !$disabled_in_code{$feature};       # and not disabling the feature
+    }
+
+    # apply some feature shine when crossing the feature disablement boundary
+    for my $feature ( sort keys %{ $feature_shine{when_disabled} }  ) {
+        my $feature_disabled = $feature{$feature}{disabled};
+        $feature_shine{when_disabled}{$feature}->($doc)
+          if $old_num < $feature_disabled        # code from before the feature
+          && $version_num >= $feature_disabled   # bumped to after the feature
           && !$enabled_in_code{$feature}         # not enabling the feature
           && !$disabled_in_code{$feature};       # and not disabling the feature
     }
