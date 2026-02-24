@@ -421,7 +421,30 @@ TODO_COMMENT
         },
     },
 
-    when_disabled => { },
+    when_disabled => {
+
+        # disabling the 'apostrophe_as_package_separator' feature
+        # drops support for apostrophe in package names
+        apostrophe_as_package_separator => sub {
+            my ($doc) = @_;
+
+            # find all names with an apostrophe
+            my $apostrophes = $doc->find(
+                sub {
+                    my ( $root, $elem ) = @_;
+                    $elem->isa('PPI::Token::Word') && $elem =~ /'/;
+                }
+            );
+            return unless $apostrophes;
+
+            # and replace it with double colons
+            for my $word (@$apostrophes) {
+                ( my $colon = "$word" ) =~ s/'/::/g;
+                $word->replace( bless { content => $colon },
+                    'PPI::Token::Word' );
+            }
+        },
+    },
 
 );
 
