@@ -342,6 +342,38 @@ sub _version_stmts {
     return $version_stmts ? @$version_stmts : ();
 }
 
+use constant ENABLED  => 'enabled';
+use constant DISABLED => 'disabled';
+use Hash::Util::FieldHash;
+Hash::Util::FieldHash::fieldhash my %feature_by_scope;
+
+# keep track of features explicitly enabled/disabled in each scope
+sub _add_feature_to_scope {
+    my ( $elem, $feature, $status ) = @_;
+    croak "Invalid status value: '$status'"
+      if $status ne ENABLED && $status ne DISABLED;
+    my $scope = $elem;
+    while ( $scope->parent ) {
+        $scope = $scope->parent;
+        last if $scope->isa('PPI::Structure::Block');
+    }
+    $feature_by_scope{$scope}{$feature} = $status;
+}
+
+# return the status of the feature for the scope surrounding the element
+# the value is one of: ENABLED, DISABLED, '' (the first two are constants)
+sub _feature_status_in_scope {
+    my ( $feature, $doc, $elem ) = @_;
+    my $scope = $elem;
+    my $status;
+    while ( $scope->parent ) {
+        $status = $feature_by_scope{$scope}{$feature}
+          and last;
+        $scope = $scope->parent;
+    }
+    return $status || $feature_by_scope{$doc}{$feature} // '';
+}
+
 my %feature_shine = (
     when_enabled => {
 
