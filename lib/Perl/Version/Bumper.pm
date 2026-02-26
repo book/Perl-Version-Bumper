@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use version;
 
-use Path::Tiny;
+use Path::Tiny ();
 use PPI::Document;
 use PPI::Token::Operator;
 use PPI::Token::Attribute;
@@ -172,7 +172,7 @@ sub __evaluate {
           : $_->[0] eq '[' ? [ __SUB__->( @$_[ 1 .. $#$_ ] ) ]    # ARRAY
         : $_->[0] eq '{' ? { __SUB__->( @$_[ 1 .. $#$_ ] ) }      # HASH
         : __SUB__->( @$_[ 1 .. $#$_ ] )    # LIST (flattened)
-      : $_,                                  # SCALAR
+      : $_,                                # SCALAR
       @_;
 }
 
