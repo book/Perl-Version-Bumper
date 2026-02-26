@@ -486,6 +486,9 @@ TODO_COMMENT
 
             # and replace it with double colons
             for my $word (@$apostrophes) {
+                next
+                  if ENABLED eq _feature_status_in_scope(
+                    apostrophe_as_package_separator => $doc => $word );
                 ( my $colon = "$word" ) =~ s/'/::/g;
                 $word->replace( bless { content => $colon },
                     'PPI::Token::Word' );
