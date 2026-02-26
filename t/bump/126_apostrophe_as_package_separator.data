@@ -24,3 +24,29 @@ use VERSION;
 use Test::More;
 isn::t( 3, 4, '3 != 4' );
 done_testing;
+########## ' in scope of use feature apostrophe_as_package_separator
+use Test::More;
+isn't( 3, 4, '3 != 4' );
+{
+    use feature 'apostrophe_as_package_separator';
+    isn't( 6, 7, '6 != 7' );
+}
+done_testing;
+---
+use VERSION;
+use Test::More;
+isn't( 3, 4, '3 != 4' );
+{
+    use feature 'apostrophe_as_package_separator';
+    isn't( 6, 7, '6 != 7' );
+}
+done_testing;
+--- v5.42
+use VERSION;
+use Test::More;
+isn::t( 3, 4, '3 != 4' );
+{
+    use feature 'apostrophe_as_package_separator';
+    isn't( 6, 7, '6 != 7' );
+}
+done_testing;
