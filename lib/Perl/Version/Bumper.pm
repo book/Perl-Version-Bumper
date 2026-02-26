@@ -463,7 +463,10 @@ TODO_COMMENT
             return unless $core_fc;
 
             # and replace them by 'fc'
-            $_->replace( PPI::Token::Word->new('fc') ) for @$core_fc;
+            # (only when not in scope of a `no feature 'fc'`)
+            $_->replace( PPI::Token::Word->new('fc') )
+              for grep _feature_status_in_scope( fc => $doc, $_ ) ne DISABLED,
+              @$core_fc;
         },
     },
 
