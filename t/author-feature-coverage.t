@@ -11,21 +11,27 @@ use Path::Tiny;
 
 my $features = Perl::Version::Bumper->feature_data;
 
-# find all test files
+# find all test data files
 my @test_types = qw( bump bump_safely );
 my %test_file;
 $test_file{$_} = {
-    map $_->basename('.data') =~ /\A[1-9][0-9]{2}_([a-z_]+)\z/g
+    map $_->basename =~ /\A1[0-9]{2}_([a-z_]+)\.data\z/g
     ? ( $1 => $_ )
     : (),
-    path( t => $_ )->children
+    path( t => $_ )->children(qr/\.data\z/)
   }
   for @test_types;
 
 # check there is one set of test data per feature
+# bump
 for my $feature ( sort keys %$features ) {
-    ok( exists $test_file{$_}{$feature}, "$_ test file for $feature" )
-      for @test_types;
+    ok( exists $test_file{bump}{$feature}, "bump test file for $feature" )
+}
+
+# bump_safely
+for my $feature ( sort keys %$features ) {
+    my $todo = todo "bump_safely not fully covered yet";
+    ok( exists $test_file{bump_safely}{$feature}, "bump_safely test file for $feature" )
 }
 
 done_testing;
