@@ -109,6 +109,7 @@ my %feature = (
     apostrophe_as_package_separator => { known => 5.042 },
     keyword_all                     => { known => 5.042 },
     keyword_any                     => { known => 5.042 },
+    enhanced_xx                     => { known => 5.044 },
 );
 
 # complete the %features data structure

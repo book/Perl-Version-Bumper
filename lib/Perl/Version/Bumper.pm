@@ -946,7 +946,7 @@ The constructor will also silently drop any sub-version information
 Return the version (in numeric format) of the feature set recognized
 by this module. It is not possible to bump code over that version.
 
-The current value of C<feature_version> is: C<5.042>.
+The current value of C<feature_version> is: C<5.044>.
 
 =head2 feature_data
 
@@ -1359,7 +1359,7 @@ BEGIN {
 
 =pod
 
-                  5.042 features known    enabled  disabled removed  compat
+                  5.044 features known    enabled  disabled removed  compat
                              say   5.010    5.010                    Perl6::Say 1 Say::Compat 1
                            state   5.010    5.010
                           switch   5.010    5.010    5.036
@@ -1389,6 +1389,7 @@ BEGIN {
                       smartmatch   5.042    5.010    5.042
                      keyword_all   5.042
                      keyword_any   5.042
+                     enhanced_xx   5.044
 
 =cut
 
