@@ -36,7 +36,7 @@ sub feature_data {
         my $disabled = substr $_, 0, 9,  '';    # %-8s
         my $removed  = substr $_, 0, 9,  '';    # %-8s
         my @compat   = split ' ';               # %s
-        y/ //d for $feature, $known, $enabled, $disabled;
+        y/ //d for $feature, $known, $enabled, $disabled, $removed;
         $feature{$feature}{known}     = $known;
         $feature{$feature}{enabled}   = $enabled  if $enabled;
         $feature{$feature}{disabled}  = $disabled if $disabled;
