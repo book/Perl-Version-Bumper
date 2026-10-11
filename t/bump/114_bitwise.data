@@ -25,7 +25,12 @@ use VERSION;
 no feature 'bitwise';
 my $z = $x | $y;
 ########## dotted bitwise ops + bitwise feature before v5.28
-use v5.28;
+use v5.22;
+use feature 'bitwise';
+no warnings 'experimental::bitwise';
+my $z = $x |. $y;
+--- v5.22
+use VERSION;
 use feature 'bitwise';
 no warnings 'experimental::bitwise';
 my $z = $x |. $y;
