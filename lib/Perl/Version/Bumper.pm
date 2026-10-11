@@ -742,6 +742,14 @@ sub bump_ppi {
         else {
             my ($use_v) = _version_stmts($doc);    # there's only one
             my $old_num = version::->parse( $use_v->version )->numify;
+
+            # record the features enabled and disabled by the bundle
+            my $feature_in_old_bundle = _feature_in_bundle($old_num);
+            _add_feature_to_scope( $use_v, $_, ENABLED )
+              for keys %{ $feature_in_old_bundle->{enabled} };
+            _add_feature_to_scope( $use_v, $_, DISABLED )
+              for keys %{ $feature_in_old_bundle->{disabled} };
+
             if ( $old_num <= $self->version_num ) {
                 _insert_version_stmt( $self, $doc, $old_num );
                 _drop_statement( $use_v, !!1 );
