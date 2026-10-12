@@ -365,7 +365,7 @@ sub _add_feature_to_scope {
 # return the status of the feature for the scope surrounding the element
 # the value is one of: ENABLED, DISABLED, '' (the first two are constants)
 sub _feature_status_in_scope {
-    my ( $feature, $doc, $elem ) = @_;
+    my ( $feature, $elem ) = @_;
     my $scope = $elem;
     my $status;
     while ( $scope ) {
@@ -400,7 +400,7 @@ my %feature_shine = (
             # if any of the bitwise ops is not inside a scope
             # where `no feature 'bitwise'` is active
             my @unsafe_ops =
-              grep _feature_status_in_scope( bitwise => $doc, $_ ) ne
+              grep _feature_status_in_scope( bitwise => $_ ) ne
               DISABLED, @$bitwise_ops;
             return unless @unsafe_ops;
 
@@ -440,7 +440,7 @@ TODO_COMMENT
             # and turn them into prototype attributes
             for my $proto (@$prototypes) {
                 next
-                  if _feature_status_in_scope( signatures => $doc, $proto ) eq
+                  if _feature_status_in_scope( signatures => $proto ) eq
                   DISABLED;
                 $proto->insert_before( PPI::Token::Operator->new(':') );
                 $proto->insert_before(
@@ -467,7 +467,7 @@ TODO_COMMENT
             # and replace them by 'fc'
             # (only when not in scope of a `no feature 'fc'`)
             $_->replace( PPI::Token::Word->new('fc') )
-              for grep _feature_status_in_scope( fc => $doc, $_ ) ne DISABLED,
+              for grep _feature_status_in_scope( fc => $_ ) ne DISABLED,
               @$core_fc;
         },
     },
@@ -492,7 +492,7 @@ TODO_COMMENT
             for my $word (@$apostrophes) {
                 next
                   if ENABLED eq _feature_status_in_scope(
-                    apostrophe_as_package_separator => $doc => $word );
+                    apostrophe_as_package_separator => $word );
                 ( my $colon = "$word" ) =~ s/'/::/g;
                 $word->replace( bless { content => $colon },
                     'PPI::Token::Word' );
