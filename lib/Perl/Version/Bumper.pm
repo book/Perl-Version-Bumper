@@ -368,12 +368,14 @@ sub _feature_status_in_scope {
     my ( $feature, $doc, $elem ) = @_;
     my $scope = $elem;
     my $status;
-    while ( $scope->parent ) {
+    while ( $scope ) {
         $status = $feature_by_scope{$scope}{$feature}
           and last;
         $scope = $scope->parent;
     }
-    return $status || $feature_by_scope{$doc}{$feature} // '';
+
+    # when neither explicitly enabled or disabled, return '' (default)
+    return $status // '';
 }
 
 my %feature_shine = (
