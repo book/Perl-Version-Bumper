@@ -363,19 +363,21 @@ sub _add_feature_to_scope {
 }
 
 # return the status of the feature for the scope surrounding the element
-# the value is one of: ENABLED, DISABLED, '' (the first two are constants)
+# the return value is an arrayref holding:
+# 0: one of ENABLED, DISABLED, '' (the first two are constants)
+# 1: the scope where the feature is enabled or disabled
 sub _feature_status_in_scope {
     my ( $feature, $elem ) = @_;
-    my $scope = $elem;
+    my @scopes = ($elem);
     my $status;
-    while ( $scope ) {
-        $status = $feature_by_scope{$scope}{$feature}
+    while ( $scopes[-1] ) {
+        $status = $feature_by_scope{ $scopes[-1] }{$feature}
           and last;
-        $scope = $scope->parent;
+        push @scopes, $scopes[-1]->parent;
     }
 
     # when neither explicitly enabled or disabled, return '' (default)
-    return $status // '';
+    return [ $status // '', $scopes[-1] // $scopes[-2] ];
 }
 
 my %feature_shine = (
@@ -400,7 +402,7 @@ my %feature_shine = (
             # if any of the bitwise ops is not inside a scope
             # where `no feature 'bitwise'` is active
             my @unsafe_ops =
-              grep _feature_status_in_scope( bitwise => $_ ) ne
+              grep _feature_status_in_scope( bitwise => $_ )->[0] ne
               DISABLED, @$bitwise_ops;
             return unless @unsafe_ops;
 
@@ -440,7 +442,7 @@ TODO_COMMENT
             # and turn them into prototype attributes
             for my $proto (@$prototypes) {
                 next
-                  if _feature_status_in_scope( signatures => $proto ) eq
+                  if _feature_status_in_scope( signatures => $proto )->[0] eq
                   DISABLED;
                 $proto->insert_before( PPI::Token::Operator->new(':') );
                 $proto->insert_before(
@@ -467,7 +469,7 @@ TODO_COMMENT
             # and replace them by 'fc'
             # (only when not in scope of a `no feature 'fc'`)
             $_->replace( PPI::Token::Word->new('fc') )
-              for grep _feature_status_in_scope( fc => $_ ) ne DISABLED,
+              for grep _feature_status_in_scope( fc => $_ )->[0] ne DISABLED,
               @$core_fc;
         },
     },
@@ -492,7 +494,7 @@ TODO_COMMENT
             for my $word (@$apostrophes) {
                 next
                   if ENABLED eq _feature_status_in_scope(
-                    apostrophe_as_package_separator => $word );
+                    apostrophe_as_package_separator => $word )->[0];
                 ( my $colon = "$word" ) =~ s/'/::/g;
                 $word->replace( bless { content => $colon },
                     'PPI::Token::Word' );
