@@ -24,6 +24,18 @@ use VERSION;
 # and 'perlop' (section "Bitwise String Operators") for details.
 no feature 'bitwise';
 my $z = $x | $y;
+########## bitwise ops + bitwise feature before v5.28
+use feature 'bitwise';
+no warnings 'experimental::bitwise';
+my $z = $x | $y;
+---
+use VERSION;
+use feature 'bitwise';
+no warnings 'experimental::bitwise';
+my $z = $x | $y;
+--- v5.28
+use VERSION;
+my $z = $x | $y;
 ########## dotted bitwise ops + bitwise feature before v5.28
 use v5.22;
 use feature 'bitwise';
@@ -64,16 +76,32 @@ my $z |.= $x;
 --- v5.28
 use VERSION;
 my $z |.= $x;
-########## no feature bitwise in limited scope
-my $z |.= $x;
+########## no feature bitwise in specific scope
+use v5.22;
 {
     no feature 'bitwise';
     my $z = $x | $y;
 }
----
+{
+    use feature 'bitwise';
+    my $z |.= $x;
+}
+--- v5.22
 use VERSION;
-my $z |.= $x;
 {
     no feature 'bitwise';
     my $z = $x | $y;
+}
+{
+    use feature 'bitwise';
+    my $z |.= $x;
+}
+--- v5.28
+use VERSION;
+{
+    no feature 'bitwise';
+    my $z = $x | $y;
+}
+{
+    my $z |.= $x;
 }

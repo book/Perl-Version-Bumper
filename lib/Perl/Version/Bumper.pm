@@ -388,7 +388,14 @@ my %feature_shine = (
         bitwise => sub {
             my ($doc) = @_;
 
-            # this only matters for code using bitwise ops
+            # in the following code:
+            # - "safe ops" are the ones (binary and dotted binary) that
+            #   depend on the 'bitwise' feature being enabled, and for whom
+            #   an explicit enablement can be removed (because `use VERSION`
+            #   enables it globally)
+            # - "unsafe ops" are the regular binary ops that worked with
+            #   'bitwise' disabled (explicitly or not), and can't have it
+            #   enabled, for fear of breaking
             # (dotted bitwise operators are detected by PPI >= 1.285)
             my $bitwise_ops = $doc->find(
                 sub {
@@ -399,11 +406,54 @@ my %feature_shine = (
             );
             return unless $bitwise_ops;
 
-            # if any of the bitwise ops is not inside a scope
-            # where `no feature 'bitwise'` is active
-            my @unsafe_ops =
-              grep _feature_status_in_scope( bitwise => $_ )->[0] ne
-              DISABLED, @$bitwise_ops;
+            # binary ops are safe when 'bitwise' is explicitly enabled,
+            # because they behave as expected, and unsafe it 'bitwise'
+            # wasn't explicitly disabled, because they're expected to
+            # have the old (before 'bitwise') behaviour
+            my ( @safe_ops, @unsafe_ops );
+            for my $op (@$bitwise_ops) {
+                my $status = _feature_status_in_scope( bitwise => $op );
+                if    ( $status->[0] eq ENABLED )  { push @safe_ops,   $status; }
+                elsif ( $status->[0] ne DISABLED ) { push @unsafe_ops, $status; }
+            }
+
+            # add dotted bitwise ops to the safe ops list,
+            # when under an explicitly enabled 'bitwise'
+            my $dotted_bitwise_ops = $doc->find(
+                sub {
+                    my ( $root, $elem ) = @_;
+                    $elem->isa('PPI::Token::Operator')
+                      && $elem =~ /\A[&|~^]\.=?\z/;
+                }
+            );
+            push @safe_ops, grep $_->[0] eq ENABLED,
+              map _feature_status_in_scope( bitwise => $_ ),
+              @$dotted_bitwise_ops
+              if $dotted_bitwise_ops;
+
+            # safe ops: find the explicit `use feature 'bitwise'`
+            # in the enclosing scope and remove it
+            for my $safe_op (@safe_ops) {
+                my $scope = $safe_op->[1];
+                for my $module (qw( feature experimental )) {
+                    for my $use_line ( _find_include( $module => $scope, 'use' ) ) {
+                        my @old_args = _ppi_list_to_perl_list( $use_line->arguments );
+                        my @new_args = grep $_ ne 'bitwise', @old_args;
+                        next if @new_args == @old_args;    # nothing to change
+                        if (@new_args) {    # replace old statement with a new one
+                            my $new_use_line = PPI::Document->new(
+                                \"use $module @{[ join ', ', map qq{'$_'}, @new_args]};"
+                            );
+                            $use_line->insert_before( $_->remove )
+                              for $new_use_line->elements;
+                            $use_line->remove;
+                        }
+                        else { _drop_statement($use_line); }
+                    }
+                }
+            }
+
+            # if there are no unsafe ops, we're done
             return unless @unsafe_ops;
 
             # the `use VERSION` inserted earlier is always the first in the doc
