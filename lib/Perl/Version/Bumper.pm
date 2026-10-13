@@ -380,6 +380,18 @@ sub _feature_status_in_scope {
     return [ $status // '', $scopes[-1] // $scopes[-2] ];
 }
 
+# replace a given PPI statement with the given code string
+# (if the code is undef, just remove the statement entirely)
+sub _replace_stmt {
+    my ( $old_stmt, $new_code, $keep_comments ) = @_;
+    if ( defined $new_code ) {
+        my $new_stmt = PPI::Document->new( \$new_code );
+        $old_stmt->insert_before( $_->remove ) for $new_stmt->elements;
+        $old_stmt->remove;
+    }
+    else { _drop_statement( $old_stmt, $keep_comments ); }
+}
+
 my %feature_shine = (
     when_enabled => {
 
@@ -440,15 +452,12 @@ my %feature_shine = (
                         my @old_args = _ppi_list_to_perl_list( $use_line->arguments );
                         my @new_args = grep $_ ne 'bitwise', @old_args;
                         next if @new_args == @old_args;    # nothing to change
-                        if (@new_args) {    # replace old statement with a new one
-                            my $new_use_line = PPI::Document->new(
-                                \"use $module @{[ join ', ', map qq{'$_'}, @new_args]};"
-                            );
-                            $use_line->insert_before( $_->remove )
-                              for $new_use_line->elements;
-                            $use_line->remove;
-                        }
-                        else { _drop_statement($use_line); }
+                        _replace_stmt(
+                            $use_line,
+                            @new_args    # replace old statement with a smaller one
+                            ? "use $module @{[ join ', ', map qq{'$_'}, @new_args]};"
+                            : undef      # or delete it entirely
+                        );
                     }
                 }
             }
@@ -637,14 +646,12 @@ sub _cleanup_bundled_features {
               grep exists $feature{$_},                         # and actually exist
               @old_args;
             next if @new_args == @old_args;    # nothing to change
-            if (@new_args) {    # replace old statement with a smaller one
-                my $new_use_line = PPI::Document->new(
-                    \"use $module @{[ join ', ', map qq{'$_'}, @new_args]};" );
-                $use_line->insert_before( $_->remove )
-                  for $new_use_line->elements;
-                $use_line->remove;
-            }
-            else { _drop_statement($use_line); }
+            _replace_stmt(
+                $use_line,
+                @new_args    # replace old statement with a smaller one
+                ? "use $module @{[ join ', ', map qq{'$_'}, @new_args]};"
+                : undef      # or delete it entirely
+            );
         }
     }
 
@@ -662,14 +669,12 @@ sub _cleanup_bundled_features {
               && !exists $feature_in_bundle->{disabled}{$_},    # not disabled yet
               @old_args;
             next if @new_args == @old_args;                     # nothing to change
-            if (@new_args) {    # replace old statement with a smaller one
-                my $new_no_feature = PPI::Document->new(
-                    \"no $module @{[ join ', ', map qq{'$_'}, @new_args]};" );
-                $no_feature->insert_before( $_->remove )
-                  for $new_no_feature->elements;
-                $no_feature->remove;
-            }
-            else { _drop_statement($no_feature); }
+            _replace_stmt(
+                $no_feature,
+                @new_args    # replace old statement with a smaller one
+                ? "no $module @{[ join ', ', map qq{'$_'}, @new_args]};"
+                : undef      # or delete it entirely
+            );
         }
     }
 
@@ -701,15 +706,12 @@ sub _cleanup_bundled_features {
         my @keep_args = grep !/\Aexperimental::/, @old_args;
         next if @new_args == @old_args    # nothing to remove
           || @new_args + @keep_args == @old_args;
-        if ( @new_args || @keep_args ) {    # replace old statement
-            my $new_warn_line = PPI::Document->new(
-                \"no warnings @{[ join ', ', map qq{'$_'}, @new_args, @keep_args]};"
-            );
-            $warn_line->insert_before( $_->remove )
-              for $new_warn_line->elements;
-            $warn_line->remove;
-        }
-        else { _drop_statement($warn_line); }
+        _replace_stmt(
+            $warn_line,
+            @new_args || @keep_args    # replace old statement
+            ? "no warnings @{[ join ', ', map qq{'$_'}, @new_args, @keep_args]};"
+            : undef                    # or delete it entirely
+        );
     }
 
     # strict is automatically enabled with 5.12
