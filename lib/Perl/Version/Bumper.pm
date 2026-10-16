@@ -653,6 +653,24 @@ sub _handle_compat_modules {
     }
 }
 
+# given $old and $new lists ($new is a subset of $old)
+# return the items that are in $old and not in $new
+sub _missing_items {
+    my ($old, $new) = @_;
+    my %to_remove;
+    $to_remove{$_}++ for @$old;
+    $to_remove{$_}-- for @$new;
+    return grep $to_remove{$_} > 0, keys %to_remove;
+}
+
+# return $old without any of the $to_remove items
+sub _remove_items {
+    my ( $old, $to_remove ) = @_;
+    my %to_remove;
+    @to_remove{@$to_remove} = ();
+    return grep !exists $to_remove{$_}, @$old;
+}
+
 sub _cleanup_bundled_features {
     my ( $self, $doc, $old_num ) = @_;
     my $version_num       = $self->version_num;
