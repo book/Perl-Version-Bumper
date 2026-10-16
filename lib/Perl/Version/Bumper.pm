@@ -385,6 +385,25 @@ sub _feature_status_in_scope {
     return $status // '';
 }
 
+# return the stack of [ status, stmt ] up to the document root
+# of all scopes where the feature is enabled or disabled
+sub _feature_status_stack {
+    my ( $feature, $elem ) = @_;
+    my @stack;
+    my $scope = ( $elem->parent );
+    while ($scope) {
+        if ( my $status = $feature_by_scope{$scope}{$feature}[0] ) {
+            push @stack, [ $status, $feature_by_scope{$scope}{$feature}[1] ];
+        }
+        elsif ( !$scope->parent && !$status ) {    # document root
+            push @stack, [ '', $feature_by_scope{$scope}{$feature}[1] ];
+            last;
+        }
+        $scope = $scope->parent;
+    }
+    return @stack;
+}
+
 # replace a given PPI statement with the given code string
 # (if the code is undef, just remove the statement entirely)
 sub _replace_stmt {
