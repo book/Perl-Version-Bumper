@@ -105,3 +105,237 @@ use VERSION;
 {
     my $z |.= $x;
 }
+########## multiple scopes 0/8
+use v5.22;
+no feature 'bitwise';
+{
+    no feature 'bitwise';
+    {
+        no feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+--- v5.22
+use VERSION;
+no feature 'bitwise';
+{
+    no feature 'bitwise';
+    {
+        no feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+########## multiple scopes 1/8
+use v5.22;
+no feature 'bitwise';
+{
+    no feature 'bitwise';
+    {
+        use feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+--- v5.22
+use VERSION;
+no feature 'bitwise';
+{
+    no feature 'bitwise';
+    {
+        use feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+########## multiple scopes 2/8
+use v5.22;
+no feature 'bitwise';
+{
+    use feature 'bitwise';
+    {
+        no feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+--- v5.22
+use VERSION;
+no feature 'bitwise';
+{
+    use feature 'bitwise';
+    {
+        no feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+--- v5.38
+use VERSION;
+no feature 'bitwise';
+{
+    use feature 'bitwise';
+    {
+        no feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+########## multiple scopes 3/8
+use v5.22;
+no feature 'bitwise';
+{
+    use feature 'bitwise';
+    {
+        use feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+--- v5.22
+use VERSION;
+no feature 'bitwise';
+{
+    use feature 'bitwise';
+    {
+        use feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+--- v5.28
+use VERSION;
+no feature 'bitwise';
+{
+    use feature 'bitwise';
+    {
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+########## multiple scopes 4/8
+use v5.22;
+use feature 'bitwise';
+{
+    no feature 'bitwise';
+    {
+        no feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+--- v5.22
+use VERSION;
+use feature 'bitwise';
+{
+    no feature 'bitwise';
+    {
+        no feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+--- v5.28
+use VERSION;
+{
+    no feature 'bitwise';
+    {
+        no feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+########## multiple scopes 5/8
+use v5.22;
+use feature 'bitwise';
+{
+    no feature 'bitwise';
+    {
+        use feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+--- v5.22
+use VERSION;
+use feature 'bitwise';
+{
+    no feature 'bitwise';
+    {
+        use feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+--- v5.28
+use VERSION;
+{
+    no feature 'bitwise';
+    {
+        use feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+########## multiple scopes 6/8
+use v5.22;
+use feature 'bitwise';
+{
+    use feature 'bitwise';
+    {
+        no feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+--- v5.22
+use VERSION;
+use feature 'bitwise';
+{
+    use feature 'bitwise';
+    {
+        no feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+--- v5.28
+use VERSION;
+{
+    {
+        no feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+########## multiple scopes 7/8
+use v5.22;
+use feature 'bitwise';
+{
+    use feature 'bitwise';
+    {
+        use feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+--- v5.22
+use VERSION;
+use feature 'bitwise';
+{
+    use feature 'bitwise';
+    {
+        use feature 'bitwise';
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}
+--- v5.28
+use VERSION;
+{
+    {
+        my $z = $x & $y;
+    }
+    my $w |= $y;
+}

@@ -354,8 +354,13 @@ use constant {
     ENABLED  => 'enabled',
     DISABLED => 'disabled',
 };
+
 use Hash::Util::FieldHash;
 Hash::Util::FieldHash::fieldhash my %feature_by_scope;
+my %feature_votes;
+$feature_votes{+ENABLED} = {};
+$feature_votes{+DISABLED} = {};
+Hash::Util::FieldHash::fieldhashes values %feature_votes;
 
 # keep track of features explicitly enabled/disabled in each scope
 # this is keyed by scope and feature, and the value is status and statement
@@ -431,7 +436,7 @@ my %feature_shine = (
             #   enables it globally)
             # - "unsafe ops" are the regular binary ops that worked with
             #   'bitwise' disabled (explicitly or not), and can't have it
-            #   enabled, for fear of breaking
+            #   enabled (or not disabled), for fear of breaking
             # (dotted bitwise operators are detected by PPI >= 1.285)
             my $bitwise_ops = $doc->find(
                 sub {
@@ -467,22 +472,18 @@ my %feature_shine = (
               @$dotted_bitwise_ops
               if $dotted_bitwise_ops;
 
-            # safe ops: find the explicit `use feature 'bitwise'`
-            # in the enclosing scope and remove it
+            # safe ops: lnd the explicit `use feature 'bitwise'`
+            # in the enclosing scope and vote to remove it
             for my $safe_op (@safe_ops) {
-                my $scope = $safe_op;
-                for my $module (qw( feature experimental )) {
-                    for my $use_line ( _find_include( $module => $doc, 'use' ) ) {
-                        my @old_args = _ppi_list_to_perl_list( $use_line->arguments );
-                        my @new_args = grep $_ ne 'bitwise', @old_args;
-                        next if @new_args == @old_args;    # nothing to change
-                        _replace_stmt(
-                            $use_line,
-                            @new_args    # replace old statement with a smaller one
-                            ? "use $module @{[ join ', ', map qq{'$_'}, @new_args]};"
-                            : undef      # or delete it entirely
-                        );
-                    }
+                my @status_stack = _feature_status_stack( bitwise => $safe_op );
+                my $vote = $feature_votes{ +ENABLED }{ $status_stack[0][1] }{bitwise};
+
+                # by construction, the first scope in the stack is ENABLED
+                if ( @status_stack > 1 && $status_stack[1][0] eq DISABLED ) {
+                    $vote->[1]++;    # vote to keep
+                }
+                else {
+                    $vote->[0]++;    # vote to delete
                 }
             }
 
@@ -676,49 +677,59 @@ sub _cleanup_bundled_features {
     my $version_num       = $self->version_num;
     my $feature_in_bundle = $self->{feature_in_bundle};
 
-    # drop features enabled in this bundle
-    # (also if they were enabled with `use experimental`)
+    # `use feature` and `no feature` are "feature controllers" (or switches),
+    # that are used to enable or disable the feature in the current lexical
+    # scope.
+    #
+    # For every controller, there are several times when we can decide
+    # to remove a feature or not from the argument list of the controller
+    # statement.
+    #
+    # The decision is taken via a "vote": at different times in the
+    # algorithm a vote to remove or keep will be cast.  In the end,
+    # a specific feature will be removed from a specific controller
+    # statement when there are no keep votes and at least on remove vote.
+    #
+    # The votes are collected in the %feature_votes hash, which is keyed
+    # by the type of statement: ENABLED (use) or DISABLED (no).
+    # One level down, a FieldHash uses the actual PPI statement as the
+    # key and the values are the features.
+    #
+    # The list of original arguments is stored in the special '' key.
+
     for my $module (qw( feature experimental )) {
-        for my $use_line ( _find_include( $module => $doc, 'use' ) ) {
-            my @old_args = _ppi_list_to_perl_list( $use_line->arguments );
-            _add_feature_to_scope( $use_line, $_, ENABLED ) for @old_args;
+
+        # drop features enabled by this bundle
+        # (also if they were enabled with `use experimental`)
+        for my $stmt ( _find_include( $module => $doc, 'use' ) ) {
+            my @old_args = @{ $feature_votes{ +ENABLED }{$stmt}{''} };
             my @new_args =    # keep enabling features that
-              grep !exists $feature_in_bundle->{enabled}{$_}    # are not enabled yet
-                 || exists $feature{$_}{unfeature},             # or are unfeatures
-              grep exists $feature{$_},                         # and actually exist
+              grep !
+              exists $feature_in_bundle->{enabled}{$_}    # are not enabled yet
+              || exists $feature{$_}{unfeature},          # or are unfeatures
+              grep exists $feature{$_},                   # and actually exist
               @old_args;
-            next if @new_args == @old_args;    # nothing to change
-            _replace_stmt(
-                $use_line,
-                @new_args    # replace old statement with a smaller one
-                ? "use $module @{[ join ', ', map qq{'$_'}, @new_args]};"
-                : undef      # or delete it entirely
-            );
+            next if @new_args == @old_args;               # nothing to change
+            $feature_votes{ +ENABLED }{$stmt}{$_}[0]++    # vote to delete
+              for _missing_items( \@old_args, \@new_args );
+        }
+
+        # drop disabled features that are disabled by this bundle
+        # (also if they were disabled with `no experimental`)
+        for my $stmt ( _find_include( $module => $doc, 'no' ) ) {
+            my @old_args = @{ $feature_votes{ +DISABLED }{$stmt}{''} };
+            my @new_args =                # keep disabling features
+              grep exists $feature{$_}    # that actually exist and are
+              && !exists $feature_in_bundle->{disabled}{$_},  # not disabled yet
+              @old_args;
+            next if @new_args == @old_args;                # nothing to change
+            $feature_votes{ +DISABLED }{$stmt}{$_}[0]++    # vote to delete
+              for _missing_items( \@old_args, \@new_args );
         }
     }
 
     # deal with compat modules
     $self->_handle_compat_modules($doc);
-
-    # drop disabled features that are not part of the bundle
-    # (also if they were disabled with `no experimental`)
-    for my $module (qw( feature experimental )) {
-        for my $no_feature ( _find_include( $module => $doc, 'no' ) ) {
-            my @old_args = _ppi_list_to_perl_list( $no_feature->arguments );
-            _add_feature_to_scope( $no_feature, $_, DISABLED ) for @old_args;
-            my @new_args =                # keep disabling features
-              grep exists $feature{$_}    # that actually exist and are
-              && !exists $feature_in_bundle->{disabled}{$_},    # not disabled yet
-              @old_args;
-            next if @new_args == @old_args;                     # nothing to change
-            _replace_stmt(
-                $no_feature,
-                @new_args    # replace old statement with a smaller one
-                ? "no $module @{[ join ', ', map qq{'$_'}, @new_args]};"
-                : undef      # or delete it entirely
-            );
-        }
-    }
 
     # apply some feature shine when crossing the feature enablement boundary
     for my $feature ( sort keys %{ $feature_shine{when_enabled} }  ) {
@@ -756,6 +767,34 @@ sub _cleanup_bundled_features {
         );
     }
 
+    # update statements according to the result of the vote
+    for my $status ( ENABLED, DISABLED ) {
+        for my $stmt (
+            map Hash::Util::FieldHash::id_2obj($_),
+            keys %{ $feature_votes{$status} }
+          )
+        {
+            my @remove;
+            my $votes = $feature_votes{$status}{$stmt};
+
+	    # check all features controlled by that statement
+            for my $feature ( grep $_, keys %$votes ) {
+                next
+                  if !$votes->{$feature}[0]    # no deletion vote
+                  || $votes->{$feature}[1];    # at least one keep vote
+                push @remove, $feature;
+            }
+            if (@remove) {
+                my $verb     = $status eq ENABLED ? 'use' : 'no';
+                my $module   = $stmt->module;
+                my $features = join ', ', map qq{'$_'},
+                  _remove_items( $feature_votes{$status}{$stmt}{''}, \@remove );
+                _replace_stmt( $stmt,
+                    $features ? "$verb $module $features;" : undef );
+            }
+        }
+    }
+
     # strict is automatically enabled with 5.12
     _drop_bare( use => strict => $doc ) if $version_num >= 5.012;
 
@@ -781,6 +820,20 @@ sub _insert_version_stmt {
       if $insert_point->previous_sibling
       && $insert_point->previous_sibling->isa('PPI::Token::Whitespace')
       && !($insert_point->isa('PPI::Statement::Include') && $insert_point->version );
+
+    # record individual features being enabled/disabled
+    for my $module (qw( feature experimental )) {
+        for my $use_feature ( _find_include( $module => $doc, 'use' ) ) {
+            my @old_args = _ppi_list_to_perl_list( $use_feature->arguments );
+            _add_feature_to_scope( $use_feature, $_, ENABLED ) for @old_args;
+            $feature_votes{+ENABLED}{$use_feature}{''} = \@old_args;
+        }
+        for my $no_feature ( _find_include( $module => $doc, 'no' ) ) {
+            my @old_args = _ppi_list_to_perl_list( $no_feature->arguments );
+            _add_feature_to_scope( $no_feature, $_, DISABLED ) for @old_args;
+            $feature_votes{+DISABLED}{$no_feature}{''} = \@old_args;
+        }
+    }
 
     # put the use VERSION LINE at the top of the file
     if ( $insert_point->significant ) {
