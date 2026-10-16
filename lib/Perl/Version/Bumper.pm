@@ -272,12 +272,20 @@ sub _drop_statement {
     if (  !$stmt->sprevious_sibling
         || $stmt->sprevious_sibling->location->[0] ne $stmt->location->[0] )
     {
+
         # collect non-significant elements until next newline (included)
-        my ( $next, @to_drop ) =  ( $stmt );
+        my ( $next, @to_drop ) = ($stmt);
         while ( $next = $next->next_sibling ) {
-            last if $next->significant;
+            if ( $next->significant ) {    # might be a compound statement
+                for my $child ( $next->children ) {
+                    last if $child->significant;
+                    push @to_drop, $child;
+                    last if $child =~ /\n\z/;
+                }
+                last;
+            }
             push @to_drop, $next;
-            last if $next eq "\n";
+            last if $next =~ /\n\z/;
         }
 
         # do not drop comments if asked to keep them
