@@ -358,34 +358,31 @@ use Hash::Util::FieldHash;
 Hash::Util::FieldHash::fieldhash my %feature_by_scope;
 
 # keep track of features explicitly enabled/disabled in each scope
+# this is keyed by scope and feature, and the value is status and statement
 sub _add_feature_to_scope {
     my ( $elem, $feature, $status ) = @_;
     croak "Invalid status value: '$status'"
       if $status ne ENABLED && $status ne DISABLED;
     my $scope = $elem;
-    while ( $scope->parent ) {
+    while ( $scope->parent ) {    # stop at the document root
         $scope = $scope->parent;
         last if $scope->isa('PPI::Structure::Block');
     }
-    $feature_by_scope{$scope}{$feature} = $status;
+    $feature_by_scope{$scope}{$feature} = [ $status, $elem ];
 }
 
 # return the status of the feature for the scope surrounding the element
-# the return value is an arrayref holding:
-# 0: one of ENABLED, DISABLED, '' (the first two are constants)
-# 1: the scope where the feature is enabled or disabled
+# the value is one of: ENABLED, DISABLED, '' (the first two are constants)
 sub _feature_status_in_scope {
     my ( $feature, $elem ) = @_;
-    my @scopes = ($elem);
+    my $scope = $elem->parent;
     my $status;
-    while ( $scopes[-1] ) {
-        $status = $feature_by_scope{ $scopes[-1] }{$feature}
+    while ( $scope ) {
+        $status = $feature_by_scope{$scope}{$feature}[0]
           and last;
-        push @scopes, $scopes[-1]->parent;
+        $scope = $scope->parent;
     }
-
-    # when neither explicitly enabled or disabled, return '' (default)
-    return [ $status // '', $scopes[-1] // $scopes[-2] ];
+    return $status // '';
 }
 
 # replace a given PPI statement with the given code string
@@ -433,8 +430,8 @@ my %feature_shine = (
             my ( @safe_ops, @unsafe_ops );
             for my $op (@$bitwise_ops) {
                 my $status = _feature_status_in_scope( bitwise => $op );
-                if    ( $status->[0] eq ENABLED )  { push @safe_ops,   $status; }
-                elsif ( $status->[0] ne DISABLED ) { push @unsafe_ops, $status; }
+                if    ( $status eq ENABLED )  { push @safe_ops,   $op; }
+                elsif ( $status ne DISABLED ) { push @unsafe_ops, $op; }
             }
 
             # add dotted bitwise ops to the safe ops list,
@@ -446,17 +443,17 @@ my %feature_shine = (
                       && $elem =~ /\A[&|~^]\.=?\z/;
                 }
             );
-            push @safe_ops, grep $_->[0] eq ENABLED,
-              map _feature_status_in_scope( bitwise => $_ ),
+            push @safe_ops,
+              grep _feature_status_in_scope( bitwise => $_ ) eq ENABLED,
               @$dotted_bitwise_ops
               if $dotted_bitwise_ops;
 
             # safe ops: find the explicit `use feature 'bitwise'`
             # in the enclosing scope and remove it
             for my $safe_op (@safe_ops) {
-                my $scope = $safe_op->[1];
+                my $scope = $safe_op;
                 for my $module (qw( feature experimental )) {
-                    for my $use_line ( _find_include( $module => $scope, 'use' ) ) {
+                    for my $use_line ( _find_include( $module => $doc, 'use' ) ) {
                         my @old_args = _ppi_list_to_perl_list( $use_line->arguments );
                         my @new_args = grep $_ ne 'bitwise', @old_args;
                         next if @new_args == @old_args;    # nothing to change
@@ -509,7 +506,7 @@ TODO_COMMENT
             # and turn them into prototype attributes
             for my $proto (@$prototypes) {
                 next
-                  if _feature_status_in_scope( signatures => $proto )->[0] eq
+                  if _feature_status_in_scope( signatures => $proto ) eq
                   DISABLED;
                 $proto->insert_before( PPI::Token::Operator->new(':') );
                 $proto->insert_before(
@@ -536,7 +533,7 @@ TODO_COMMENT
             # and replace them by 'fc'
             # (only when not in scope of a `no feature 'fc'`)
             $_->replace( PPI::Token::Word->new('fc') )
-              for grep _feature_status_in_scope( fc => $_ )->[0] ne DISABLED,
+              for grep _feature_status_in_scope( fc => $_ ) ne DISABLED,
               @$core_fc;
         },
     },
@@ -561,7 +558,7 @@ TODO_COMMENT
             for my $word (@$apostrophes) {
                 next
                   if ENABLED eq _feature_status_in_scope(
-                    apostrophe_as_package_separator => $word )->[0];
+                    apostrophe_as_package_separator => $word );
                 ( my $colon = "$word" ) =~ s/'/::/g;
                 $word->replace( bless { content => $colon },
                     'PPI::Token::Word' );
