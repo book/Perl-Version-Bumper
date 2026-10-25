@@ -13,6 +13,13 @@ use PPI::Token::Operator;
 use PPI::Token::Attribute;
 use Carp qw( carp croak );
 
+use Perl::Version::Bumper::Helper::Version qw(
+    version_fmt
+    version_use
+    stable_version
+    stable_version_dec
+);
+
 # CLASS METHODS
 
 my $feature_version;
@@ -48,60 +55,6 @@ sub feature_data {
 }
 
 my %feature = %{ feature_data() };
-
-# EXPORTABLE FUNCTIONS
-
-use Exporter 'import';
-
-our @EXPORT_OK = qw(
-    version_fmt
-    version_use
-    stable_version
-    stable_version_inc
-    stable_version_dec
-);
-
-# return a normalized version of a plausible Perl version number (or die)
-sub version_fmt {
-    my $o = shift // $];
-    $o = $] unless length $o;
-    my $v = version::->parse($o)->numify;    # accept everything
-    return $v < 5.010
-      ? croak "Unsupported Perl version: $o"
-      : sprintf "%.3f", $v;                  # Perl version bundle
-}
-
-# return a normalized version, suitable for "use VERSION"
-sub version_use {
-    my $o = shift // $];
-    $o = $] unless length $o;
-    my $v = version::->parse($o)->numify;    # accept everything
-    return $v < 5.010
-      ? croak "Unsupported Perl version: $o"
-      : sprintf 'v5.%d', substr( $v, 2, 3 );    # Perl version bundle
-}
-
-# return the closest stable version number lower than the parameter
-sub stable_version {
-    my $v = version_fmt(shift);
-    $v *= 1000;
-    return sprintf "%.3f", ( int($v) - $v % 2 ) / 1000;
-}
-
-# increment the version number to the next stable version
-sub stable_version_inc {
-    my $v = stable_version(shift);    # closest previous stable
-    return sprintf "%.3f", $v + 0.002;
-}
-
-# decrement the version number to the previous stable version
-sub stable_version_dec {
-    my $v = version_fmt(shift);    # format the version
-    my $s = stable_version($v);    # get the closest previous stable
-    return $v ne $s
-      ? $s                         # dev -> previous stable
-      : sprintf "%.3f", $s - 0.002 # previous stable
-}
 
 # CONSTRUCTOR
 
@@ -1256,50 +1209,6 @@ not be modified if the code can't be bumped safely.
 The return value is C<undef> if the original didn't compile, false
 if all attempts to bump the file failed, and the actual (numerical)
 version number the file was bumped to in case of success.
-
-=head1 EXPORTS
-
-The following I<functions> can be optionally exported. Be aware that they
-are mostly meant for internal use of the module and helper scripts.
-
-=head2 version_fmt
-
-    my $v = version_fmt( $version );
-
-Return the given version (in string, v-string or float format) as a number.
-
-This function will die if the given version is not a plausible Perl
-version number, i.e. is strictly lower than C<5.010>.
-
-Note that all the following functions start by normalizing their
-argument by calling L</version_fmt>, meaning they will die in the same
-circumstances.
-
-=head2 version_use
-
-    my $v = version_use( $version );
-
-Return the given version (in string, v-string or float format) as
-a string suitable for a C<use VERSION> line.
-
-=head2 stable_version
-
-    my $s = stable_version( $version );
-
-Return the closest stable version lower or equal to the given version,
-as a number.
-
-=head2 stable_version_inc
-
-    my $n = stable_version_inc( $version );
-
-Return the stable version following the given version, as a number.
-
-=head2 stable_version_dec
-
-    my $p = stable_version_dec( $version );
-
-Return the stable version preceding the given version, as a number.
 
 =head1 VERSION UPGRADE ALGORITHM
 
