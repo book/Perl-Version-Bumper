@@ -48,7 +48,7 @@ When reading a file, starting from line 0, B<perl> starts in
 roughly equivalent to Perl as it was in version 5.008.
 
 Contrary to many other programming languages, Perl requires the
-developer to opt in to the new features of the languague.
+developer to opt in to the new features of the language.
 
 You can do this on line 1, simply by writing (for example):
 
