@@ -14,10 +14,10 @@ use PPI::Token::Attribute;
 use Carp qw( carp croak );
 
 use Perl::Version::Bumper::Helper::Version qw(
-    version_fmt
-    version_use
-    stable_version
-    stable_version_dec
+  version_fmt
+  version_use
+  stable_version
+  stable_version_dec
 );
 
 # CLASS METHODS
@@ -730,7 +730,7 @@ sub _cleanup_bundled_features {
             my @remove;
             my $votes = $feature_votes{$status}{$stmt};
 
-	    # check all features controlled by that statement
+            # check all features controlled by that statement
             for my $feature ( grep $_, keys %$votes ) {
                 next
                   if !$votes->{$feature}[0]    # no deletion vote
