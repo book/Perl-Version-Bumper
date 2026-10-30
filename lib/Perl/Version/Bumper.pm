@@ -11,6 +11,7 @@ use Path::Tiny ();
 use PPI::Document;
 use PPI::Token::Operator;
 use PPI::Token::Attribute;
+use PPIx::Literal;
 use Carp qw( carp croak );
 
 use Perl::Version::Bumper::Helper::Version qw(
@@ -117,96 +118,6 @@ sub version { shift->{version} }
 sub version_num { shift->{version_num} }
 
 # PRIVATE FUNCTIONS
-
-sub __evaluate {
-    map ref()
-      ? $_->[0] eq 'CODE'
-          ? sub { }    # leave anonymous subs as is
-          : $_->[0] eq '[' ? [ __SUB__->( @$_[ 1 .. $#$_ ] ) ]    # ARRAY
-        : $_->[0] eq '{' ? { __SUB__->( @$_[ 1 .. $#$_ ] ) }      # HASH
-        : __SUB__->( @$_[ 1 .. $#$_ ] )    # LIST (flattened)
-      : $_,                                # SCALAR
-      @_;
-}
-
-# given a list of PPI tokens, construct a Perl data structure
-sub _ppi_list_to_perl_list {
-
-    # are there constants we ought to know about?
-    my $constants = ref $_[-1] eq 'HASH' ? pop @_ : {};
-
-    # make sure we have tokens (i.e. deconstruct Statement and Structure objects)
-    my @tokens = grep $_->significant, map $_->tokens, @_;
-    my @stack  = my $root = my $ptr = [];
-    my $prev;
-    while ( my $token = shift @tokens ) {
-        if ( $token->isa('PPI::Token::Structure') ) {
-            if ( $token =~ /\A[[{(]\z/ ) {    # opening
-                $ptr = $token eq '{' && $prev && $prev eq 'sub'    # sub { ... }
-                  ? do { pop @{ $stack[-1] }; ['CODE'] }    # drop 'sub' token
-                  : ["$token"];
-                push @{ $stack[-1] }, $ptr;
-                push @stack,          $ptr;
-            }
-            elsif ( $token =~ /\A[]})]\z/ ) {                      # closing
-                pop @stack;
-                $ptr = $stack[-1];
-            }
-        }
-        elsif ( $token eq ',' || $token eq '=>' ) { }              # skip
-        elsif ( $token->isa('PPI::Token::Symbol') ) {              # variable
-
-            # construct the expression back (and keep the object around)
-            my $expr = PPI::Document->new( \join '', $token, @tokens );
-
-            # PPI::Document -> PPI::Statement
-            # -> PPI::Token::Symbol (ignored), PPI::Sructure::Subscript (maybe)
-            my ( undef, $subscript ) = $expr->child(0)->children;
-            if ( $subscript && $subscript->isa('PPI::Structure::Subscript') ) {
-                shift @tokens for $subscript->tokens;    # drop subcript tokens
-                push @$ptr, "$token$subscript";          # symbol + subscript
-            }
-            else {
-                push @$ptr, "$token";                    # simple symbol
-            }
-        }
-        elsif ($token->isa('PPI::Token::Word')                     # undef
-            && $token eq 'undef'
-            && ( $tokens[0] ? $tokens[0] ne '=>' : !!1 ) )
-        {
-            push @$ptr, undef;
-        }
-        elsif ($token->isa('PPI::Token::HereDoc') ) {              # heredoc
-            push @$ptr, join '', $token->heredoc;
-        }
-        else {
-            my $next_sibling = $token->snext_sibling;
-            push @$ptr,
-
-              # maybe a known constant?
-                exists $constants->{$token} && ( $next_sibling ? $next_sibling ne '=>' : !!1 )
-                                        ? $constants->{$token}
-
-              # various types of strings
-              : $token->can('literal')  ? $token->literal
-              : $token->can('simplify') ? do {
-                  my $clone = $token->clone;
-                  $clone->simplify && $clone->can('literal')
-                                        ? $clone->literal
-                                        : "$clone";
-                }
-              : $token->can('string')   ? $token->string
-
-              # stop at the first operator
-              : $token->isa( 'PPI::Token::Operator' ) ? last
-
-              # give up and just stringify
-              :                         "$token";
-        }
-        $prev = $token;
-    }
-    return __evaluate(@$root);
-}
 
 sub _drop_statement {
     my ( $stmt, $keep_comments ) = @_;
@@ -702,7 +613,7 @@ sub _cleanup_bundled_features {
 
     # drop experimental warnings, if any
     for my $warn_line ( _find_include( warnings => $doc, 'no' ) ) {
-        my @old_args = _ppi_list_to_perl_list( $warn_line->arguments );
+        my @old_args = PPIx::Literal->convert( $warn_line->arguments );
         next unless grep /\Aexperimental::/, @old_args;
         my @new_args = grep {
             ( my $feature = $_ ) =~ s/\Aexperimental:://;
@@ -777,12 +688,12 @@ sub _insert_version_stmt {
     # record individual features being enabled/disabled
     for my $module (qw( feature experimental )) {
         for my $use_feature ( _find_include( $module => $doc, 'use' ) ) {
-            my @old_args = _ppi_list_to_perl_list( $use_feature->arguments );
+            my @old_args = PPIx::Literal->convert( $use_feature->arguments );
             _add_feature_to_scope( $use_feature, $_, ENABLED ) for @old_args;
             $feature_votes{+ENABLED}{$use_feature}{''} = \@old_args;
         }
         for my $no_feature ( _find_include( $module => $doc, 'no' ) ) {
-            my @old_args = _ppi_list_to_perl_list( $no_feature->arguments );
+            my @old_args = PPIx::Literal->convert( $no_feature->arguments );
             _add_feature_to_scope( $no_feature, $_, DISABLED ) for @old_args;
             $feature_votes{+DISABLED}{$no_feature}{''} = \@old_args;
         }
