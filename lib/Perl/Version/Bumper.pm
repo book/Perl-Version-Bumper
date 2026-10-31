@@ -20,6 +20,9 @@ use Perl::Version::Bumper::Helper::Version qw(
   stable_version
   stable_version_dec
 );
+use Perl::Version::Bumper::Helper::PPI qw(
+  drop_statement
+);
 
 # CLASS METHODS
 
@@ -119,51 +122,6 @@ sub version_num { shift->{version_num} }
 
 # PRIVATE FUNCTIONS
 
-sub _drop_statement {
-    my ( $stmt, $keep_comments ) = @_;
-
-    # remove non-significant elements before the statement
-    while ( my $prev_sibling = $stmt->previous_sibling ) {
-        last if $prev_sibling->significant;
-        last if $prev_sibling =~ /\n\z/;
-        $prev_sibling->remove;
-    }
-
-    # remove non-significant elements after the statement
-    # if there was no significant element before it on the same line
-    # (i.e. it was the only statement on the line)
-    $stmt->document->index_locations;
-    if (  !$stmt->sprevious_sibling
-        || $stmt->sprevious_sibling->location->[0] ne $stmt->location->[0] )
-    {
-
-        # collect non-significant elements until next newline (included)
-        my ( $next, @to_drop ) = ($stmt);
-        while ( $next = $next->next_sibling ) {
-            if ( $next->significant ) {    # might be a compound statement
-                for my $child ( $next->children ) {
-                    last if $child->significant;
-                    push @to_drop, $child;
-                    last if $child =~ /\n\z/;
-                }
-                last;
-            }
-            push @to_drop, $next;
-            last if $next =~ /\n\z/;
-        }
-
-        # do not drop comments if asked to keep them
-        @to_drop = grep !$_->isa('PPI::Token::Comment') && $_ ne "\n", @to_drop
-          if $keep_comments && grep $_->isa('PPI::Token::Comment'), @to_drop;
-        $_->remove for @to_drop;
-
-        $stmt->document->flush_locations;
-    }
-
-    # and finally remove it
-    $stmt->remove;
-}
-
 sub _drop_bare {
    my ( $type, $module, $doc ) = @_;
     my $use_module = $doc->find(
@@ -178,7 +136,7 @@ sub _drop_bare {
         }
     );
     if ( ref $use_module ) {
-        _drop_statement($_) for @$use_module;
+        drop_statement($_) for @$use_module;
     }
     return;
 }
@@ -282,7 +240,7 @@ sub _replace_stmt {
         $old_stmt->insert_before( $_->remove ) for $new_stmt->elements;
         $old_stmt->remove;
     }
-    else { _drop_statement( $old_stmt, $keep_comments ); }
+    else { drop_statement( $old_stmt, $keep_comments ); }
 }
 
 my %feature_shine = (
@@ -480,7 +438,7 @@ sub _handle_compat_modules {
 
                     # some compat modules have no unimport() sub
                     # so we drop the useless `no $compat`
-                    _drop_statement($include_compat)
+                    drop_statement($include_compat)
                       if exists $feature_in_bundle->{known}{$feature}
                       || $feature{$feature}{compat}{$compat} > 0;
                 }
@@ -511,7 +469,7 @@ sub _handle_compat_modules {
                       && ( exists $feature_in_bundle->{enabled}{$feature}
                         || $feature{$feature}{compat}{$compat} < 0 );
 
-                    _drop_statement($include_compat) if $drop_stmt;
+                    drop_statement($include_compat) if $drop_stmt;
                 }
             }
         }
@@ -767,7 +725,7 @@ sub bump_ppi {
 
             if ( $old_num <= $self->version_num ) {
                 _insert_version_stmt( $self, $doc, $old_num );
-                _drop_statement( $use_v, !!1 );
+                drop_statement( $use_v, !!1 );
             }
         }
     }
