@@ -100,7 +100,7 @@ use VERSION;
 #!/usr/bin/env perl
 use VERSION;
 ...;
-# some comment about use version
+    # some comment about use version
 # more stuff
 ...;
 ########## use version inside a block
@@ -137,7 +137,6 @@ use warnings; # comment
 --- v5.36
 use VERSION;
 use Foo;
-# comment
 ########## no warning before v line
 no warnings 'once';
 use v5.10;

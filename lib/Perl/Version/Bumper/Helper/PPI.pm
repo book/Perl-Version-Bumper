@@ -8,53 +8,59 @@ use warnings;
 use Exporter qw( import );
 
 our @EXPORT_OK = qw(
-    drop_statement
+  drop_statement
 );
 our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 
 sub drop_statement {
     my ( $stmt, $keep_comments ) = @_;
+    my ( @ws_before, @ws_after, @nl );
+    my %has;    # keep track of the other content on the line
 
-    # remove non-significant elements before the statement
-    while ( my $prev_sibling = $stmt->previous_sibling ) {
-        last if $prev_sibling->significant;
-        last if $prev_sibling =~ /\n\z/;
-        $prev_sibling->remove;
+    # record non-significant elements before the statement
+    my $prev = $stmt;
+    while ( $prev = $prev->previous_sibling ) {
+        $has{stmt_before}++, last
+          if $prev->significant;
+        last if $prev =~ /\n\z/;
+        push @ws_before, $prev;
     }
 
-    # remove non-significant elements after the statement
-    # if there was no significant element before it on the same line
-    # (i.e. it was the only statement on the line)
-    $stmt->document->index_locations;
-    if (  !$stmt->sprevious_sibling
-        || $stmt->sprevious_sibling->location->[0] ne $stmt->location->[0] )
-    {
-
-        # collect non-significant elements until next newline (included)
-        my ( $next, @to_drop ) = ($stmt);
-        while ( $next = $next->next_sibling ) { 
-            if ( $next->significant ) {    # might be a compound statement
-                for my $child ( $next->children ) {
-                    last if $child->significant;
-                    push @to_drop, $child;
-                    last if $child =~ /\n\z/;
-                }
-                last;
+    # record non-significant elements until newline (included) or statement
+    my $next = ($stmt);
+  AFTER:
+    while ( $next = $next->next_sibling ) {
+        if ( $next->significant ) {    # might be a compound statement
+            for my $child ( $next->children ) {
+                last if $child->significant;
+                push @ws_after, $child;
+                last AFTER if $child =~ /\n\z/;
             }
-            push @to_drop, $next;
-	    last if $next =~ /\n\z/;
+            $has{stmt_after}++;
+            last;
         }
-
-        # do not drop comments if asked to keep them
-        @to_drop = grep !$_->isa('PPI::Token::Comment') && $_ ne "\n", @to_drop
-          if $keep_comments && grep $_->isa('PPI::Token::Comment'), @to_drop;
-        $_->remove for @to_drop;
-
-        $stmt->document->flush_locations;
+        $has{comment_kept}++, last     # keep comment
+          if $next->isa('PPI::Token::Comment') && $keep_comments;
+        push @ws_after, $next;
+        last if $next =~ /\n\z/;
     }
 
-    # and finally remove it
-    $stmt->remove;
+    # keep the final newline separate, if any
+    push @nl, pop @ws_after if $ws_after[-1] =~ /\n\z/;
+
+    # collect everything we want to drop
+    my @to_drop = ($stmt);
+    push @to_drop, @ws_before
+      if $has{stmt_before}
+      || ( !$has{stmt_after} && !$has{comment_kept} );
+    push @to_drop, @ws_after
+      if !$has{stmt_before}
+      || ( !$has{stmt_after} && !$has{comment_kept} );
+    push @to_drop, @nl
+      if !$has{stmt_before} && !$has{stmt_after};
+
+    # and drop it all
+    $_->remove for @to_drop;
 }
 
 1;
@@ -89,15 +95,14 @@ The C<:all> export tag will export them all at once.
 
     drop_statement( $stmt, $keep_comments );
 
-Remove the PPI statement passed as an argument from its document.
-The preceding whitespace is removed, as well as any non-significant
-tokens after (white space and comments).
+Remove the PPI statement passed as an argument from its parent document.
 
 C<$keep_comments> is a boolean argument indicating if the end-of-line
-comments following the statement should be preserved or not (the default
-is false, meaning the comments will be removed).
+comments immediately following the statement should be preserved or not
+(the default is false).
 
-When the statement is not the only significant code on the line, 
+Indentation is kept if anything other than the statement remains on the
+line (e.g., another statement or end-of-line comment).
 
 =head1 AUTHOR
 
