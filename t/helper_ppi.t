@@ -185,6 +185,19 @@ $doc = $src->clone;
 drop_statement( $doc->find('PPI::Statement::Include')->[0] );
 is( $doc->serialize, '', 'remove use version and comments' );
 
+# no line ending
+$src = PPI::Document->new( \'use Foo; use Bar;' );
+
+$doc = $src->clone;
+ok(
+    no_warnings {
+        drop_statement( $doc->find('PPI::Statement::Include')->[1] );
+    },
+    'no warnings when removing the last statement (no EOL)'
+);
+is( $doc->serialize, 'use Foo;',
+    'remove statement with no newline at the end' );
+
 # KEEP COMMENTS
 
 # remove individual statements

@@ -46,7 +46,7 @@ sub drop_statement {
     }
 
     # keep the final newline separate, if any
-    push @nl, pop @ws_after if $ws_after[-1] =~ /\n\z/;
+    push @nl, pop @ws_after if @ws_after && $ws_after[-1] =~ /\n\z/;
 
     # collect everything we want to drop
     my @to_drop = ($stmt);
